@@ -94,6 +94,7 @@
             </label>
             <span class="db-pill license-pill" id="license-pill">Licenca</span>
             <button class="icon-top notify" id="scan-button" type="button" aria-label="Alertas"></button>
+            <button class="soft-button" id="license-action-button" type="button">Ativar licenca</button>
             <button class="ghost" id="refresh-button" type="button">Atualizar</button>
             <div class="admin-chip">
               <span class="user-avatar small">A</span>
@@ -388,6 +389,41 @@
         <footer class="modal-actions">
           <button class="ghost" data-dialog-close="user-dialog" type="button">Cancelar</button>
           <button class="primary" id="user-submit-button" type="button">Salvar usuario</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <dialog class="modal" id="license-dialog">
+      <form method="dialog" id="license-form" class="modal-card compact">
+        <header class="modal-header">
+          <div>
+            <p class="eyebrow">Licenca</p>
+            <h3>Ativar ou trocar licenca</h3>
+          </div>
+          <button class="icon-button" data-dialog-close="license-dialog" type="button">x</button>
+        </header>
+
+        <p class="muted" id="license-dialog-message">Informe a chave do produto para liberar o sistema neste computador.</p>
+
+        <div class="form-grid two">
+          <label>
+            E-mail da compra
+            <input id="license-email" type="email" placeholder="cliente@empresa.com.br" />
+          </label>
+          <label>
+            API de ativacao
+            <input id="license-api-url" placeholder="https://.../functions/v1/licenses" />
+          </label>
+          <label class="span-2">
+            Chave do produto
+            <input id="license-key" placeholder="CC-..." required />
+          </label>
+        </div>
+
+        <footer class="modal-actions">
+          <button class="ghost" data-dialog-close="license-dialog" type="button">Cancelar</button>
+          <button class="soft-button" id="license-trial-button" type="button">Iniciar avaliacao</button>
+          <button class="primary" id="license-submit-button" type="button">Ativar licenca</button>
         </footer>
       </form>
     </dialog>

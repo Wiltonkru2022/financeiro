@@ -71,6 +71,23 @@ const roleLabels = {
   viewer: 'Consulta'
 };
 
+const defaultSettings = {
+  notifications: {
+    enabled: true,
+    dueSoonDays: 3,
+    dailySummaryOnStartup: true
+  },
+  license: {
+    apiUrl: 'https://sfinvquyuspingeqjamz.supabase.co/functions/v1/licenses'
+  },
+  online: {
+    siteUrl: 'https://github.com/Wiltonkru2022/financeiro/releases/latest',
+    supabaseUrl: 'https://sfinvquyuspingeqjamz.supabase.co',
+    supabaseAnonKey: 'sb_publishable_R5z0B2_UHE0UrJ3TdTmAGg_3iaaeC0z',
+    syncEnabled: false
+  }
+};
+
 const catalogConfigs = {
   parties: {
     label: 'Clientes e fornecedores',
@@ -303,7 +320,7 @@ async function refreshAll() {
   state.bootstrap = await api.getBootstrap();
   state.lookups = state.bootstrap.lookups;
   state.snapshot = state.bootstrap.snapshot;
-  state.settings = state.bootstrap.settings;
+  state.settings = normalizeSettings(state.bootstrap.settings);
   state.license = state.bootstrap.license;
   state.health = state.bootstrap.health;
   byId('database-path').textContent = `Banco: ${state.bootstrap.databasePath}`;
@@ -332,16 +349,41 @@ async function refreshAll() {
   render();
 }
 
+function normalizeSettings(settings = {}) {
+  const source = settings && typeof settings === 'object' && !Array.isArray(settings) ? settings : {};
+  const notifications = source.notifications && typeof source.notifications === 'object' && !Array.isArray(source.notifications) ? source.notifications : {};
+  const license = source.license && typeof source.license === 'object' && !Array.isArray(source.license) ? source.license : {};
+  const online = source.online && typeof source.online === 'object' && !Array.isArray(source.online) ? source.online : {};
+
+  return {
+    notifications: {
+      ...defaultSettings.notifications,
+      ...notifications
+    },
+    license: {
+      ...defaultSettings.license,
+      ...license
+    },
+    online: {
+      ...defaultSettings.online,
+      ...online
+    }
+  };
+}
+
 function updateLicenseUi() {
   const active = state.license?.active;
   document.querySelector('.shell').hidden = !active;
   byId('activation-screen').hidden = Boolean(active);
   byId('license-pill').textContent = state.license?.label || 'Nao ativado';
   byId('license-pill').className = `db-pill license-pill ${active ? 'active' : 'blocked'}`;
+  byId('license-action-button').textContent = active ? 'Trocar licenca' : 'Ativar licenca';
 
   if (!active) {
-    byId('activation-message').textContent = state.license?.message || 'Ative para liberar o painel.';
-    byId('activation-api-url').value = state.settings?.license?.apiUrl || 'http://localhost:3877';
+    const activationMessage = byId('activation-message');
+    activationMessage.textContent = state.license?.message || 'Ative para liberar o painel.';
+    activationMessage.style.color = '';
+    byId('activation-api-url').value = state.settings?.license?.apiUrl || defaultSettings.license.apiUrl;
   }
 }
 
@@ -1214,9 +1256,13 @@ function renderAudit() {
 }
 
 function renderBackup() {
-  const notifications = state.settings.notifications;
-  const license = state.settings.license || {};
-  const online = state.settings.online || {};
+  const settings = normalizeSettings(state.settings);
+  const notifications = settings.notifications;
+  const license = settings.license;
+  const online = settings.online;
+  const currentLicense = state.license || {};
+  const licenseStatus = currentLicense.active ? currentLicense.label || 'Licenca ativa' : currentLicense.label || 'Nao ativado';
+  const licenseValidity = currentLicense.expiresAt ? new Date(currentLicense.expiresAt).toLocaleString('pt-BR') : '-';
   const root = byId('view-root');
 
   root.innerHTML = `
@@ -1236,6 +1282,40 @@ function renderBackup() {
         <p class="muted">Restaura um backup `.db`. O sistema cria uma copia de seguranca antes.</p>
         <button class="danger" data-action="restore-backup" type="button">Restaurar backup</button>
       </article>
+    </section>
+
+    <section class="table-card" style="margin-top:16px">
+      <div class="panel-header">
+        <h3>Licenca e ativacao</h3>
+        <span class="muted">Chave do produto e API online</span>
+      </div>
+      <div class="form-grid two">
+        <label>
+          Status da licenca
+          <input value="${escapeHtml(licenseStatus)}" disabled />
+        </label>
+        <label>
+          Validade
+          <input value="${escapeHtml(licenseValidity)}" disabled />
+        </label>
+        <label>
+          Cliente
+          <input value="${escapeHtml(currentLicense.customerName || '-')}" disabled />
+        </label>
+        <label>
+          E-mail
+          <input value="${escapeHtml(currentLicense.customerEmail || '-')}" disabled />
+        </label>
+        <label class="span-2">
+          API de ativacao
+          <input id="setting-license-api-url" value="${escapeHtml(license.apiUrl || defaultSettings.license.apiUrl)}" placeholder="https://.../functions/v1/licenses" />
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button class="soft-button" data-action="open-license-dialog" type="button">Ativar ou trocar licenca</button>
+        <button class="danger" data-action="clear-license" type="button">Remover licenca local</button>
+        <button class="primary" data-action="save-settings" type="button">Salvar licenca</button>
+      </div>
     </section>
 
     <section class="table-card" style="margin-top:16px">
@@ -1274,10 +1354,6 @@ function renderBackup() {
         <span class="muted">Site, download e Supabase</span>
       </div>
       <div class="form-grid two">
-        <label class="span-2">
-          API de ativacao
-          <input id="setting-license-api-url" value="${escapeHtml(license.apiUrl || '')}" placeholder="https://.../functions/v1/licenses" />
-        </label>
         <label>
           Site online
           <input id="setting-site-url" value="${escapeHtml(online.siteUrl || '')}" placeholder="https://seudominio.com.br/financeiro" />
@@ -1672,6 +1748,7 @@ async function restoreBackup() {
 }
 
 async function saveSettings() {
+  const settings = normalizeSettings(state.settings);
   const notifications = {
     enabled: byId('setting-notifications-enabled').value === 'true',
     dueSoonDays: Number(byId('setting-due-soon-days').value || 3),
@@ -1679,8 +1756,8 @@ async function saveSettings() {
   };
 
   const license = {
-    ...(state.settings.license || {}),
-    apiUrl: byId('setting-license-api-url')?.value || ''
+    ...settings.license,
+    apiUrl: byId('setting-license-api-url')?.value || settings.license.apiUrl
   };
 
   const online = {
@@ -1699,11 +1776,13 @@ async function saveSettings() {
 }
 
 function collectOnlineSettings() {
+  const settings = normalizeSettings(state.settings);
+
   return {
-    licenseApiUrl: byId('setting-license-api-url')?.value || state.settings.license?.apiUrl || '',
-    siteUrl: byId('setting-site-url')?.value || state.settings.online?.siteUrl || '',
-    supabaseUrl: byId('setting-supabase-url')?.value || state.settings.online?.supabaseUrl || '',
-    supabaseAnonKey: byId('setting-supabase-anon-key')?.value || state.settings.online?.supabaseAnonKey || '',
+    licenseApiUrl: byId('setting-license-api-url')?.value || settings.license.apiUrl || '',
+    siteUrl: byId('setting-site-url')?.value || settings.online.siteUrl || '',
+    supabaseUrl: byId('setting-supabase-url')?.value || settings.online.supabaseUrl || '',
+    supabaseAnonKey: byId('setting-supabase-anon-key')?.value || settings.online.supabaseAnonKey || '',
     syncEnabled: byId('setting-sync-enabled')?.value === 'true'
   };
 }
@@ -1728,31 +1807,89 @@ async function openOnlineSite() {
   await runSafely(() => api.openUrl(siteUrl), 'Site aberto no navegador.');
 }
 
-async function activateProduct() {
-  const payload = {
-    email: byId('activation-email').value,
-    productKey: byId('activation-key').value,
-    apiUrl: byId('activation-api-url').value
+function activationSourceIds(source) {
+  return source === 'dialog'
+    ? {
+        email: 'license-email',
+        key: 'license-key',
+        apiUrl: 'license-api-url',
+        message: 'license-dialog-message',
+        dialog: 'license-dialog'
+      }
+    : {
+        email: 'activation-email',
+        key: 'activation-key',
+        apiUrl: 'activation-api-url',
+        message: 'activation-message',
+        dialog: null
+      };
+}
+
+function activationPayload(source = 'screen') {
+  const ids = activationSourceIds(source);
+
+  return {
+    email: byId(ids.email)?.value || '',
+    productKey: byId(ids.key)?.value || '',
+    apiUrl: byId(ids.apiUrl)?.value || state.settings?.license?.apiUrl || defaultSettings.license.apiUrl
   };
+}
 
-  byId('activation-message').textContent = 'Validando chave com a API de licencas...';
+function setActivationMessage(source = 'screen', message, isError = false) {
+  const ids = activationSourceIds(source);
+  const target = byId(ids.message);
 
-  try {
-    state.license = await api.activateLicense(payload);
-    await refreshAll();
-    showToast('Produto ativado com sucesso.');
-  } catch (error) {
-    byId('activation-message').textContent = error.message || 'Nao foi possivel ativar.';
+  if (target) {
+    target.textContent = message;
+    target.style.color = isError ? 'var(--danger)' : '';
   }
 }
 
-async function startTrial() {
+function closeActivationSource(source = 'screen') {
+  const dialogId = activationSourceIds(source).dialog;
+
+  if (dialogId) {
+    byId(dialogId)?.close();
+  }
+}
+
+function openLicenseDialog() {
+  const settings = normalizeSettings(state.settings);
+  const license = state.license || {};
+
+  byId('license-dialog-message').textContent = license.active
+    ? 'Informe uma nova chave para trocar a licenca deste computador.'
+    : 'Informe a chave do produto para liberar o sistema neste computador.';
+  byId('license-dialog-message').style.color = '';
+  byId('license-email').value = license.customerEmail || '';
+  byId('license-key').value = '';
+  byId('license-api-url').value = settings.license.apiUrl || defaultSettings.license.apiUrl;
+  byId('license-dialog').showModal();
+}
+
+async function activateProduct(source = 'screen') {
+  const payload = activationPayload(source);
+
+  setActivationMessage(source, 'Validando chave com a API de licencas...');
+
+  try {
+    state.license = await api.activateLicense(payload);
+    closeActivationSource(source);
+    await refreshAll();
+    showToast('Produto ativado com sucesso.');
+  } catch (error) {
+    setActivationMessage(source, error.message || 'Nao foi possivel ativar.', true);
+  }
+}
+
+async function startTrial(source = 'screen') {
   try {
     state.license = await api.startTrial();
+    closeActivationSource(source);
     await refreshAll();
     showToast('Avaliacao de 7 dias iniciada.');
   } catch (error) {
-    byId('activation-message').textContent = error.message || 'Nao foi possivel iniciar a avaliacao.';
+    setActivationMessage(source, error.message || 'Nao foi possivel iniciar a avaliacao.', true);
   }
 }
 
@@ -1858,8 +1995,11 @@ function bindGlobalEvents() {
 
   byId('scan-button').addEventListener('click', scanNotifications);
   byId('refresh-button').addEventListener('click', () => runSafely(refreshAll, 'Dados atualizados.'));
-  byId('activate-button').addEventListener('click', activateProduct);
-  byId('trial-button').addEventListener('click', startTrial);
+  byId('license-action-button').addEventListener('click', openLicenseDialog);
+  byId('activate-button').addEventListener('click', () => activateProduct('screen'));
+  byId('trial-button').addEventListener('click', () => startTrial('screen'));
+  byId('license-submit-button').addEventListener('click', () => activateProduct('dialog'));
+  byId('license-trial-button').addEventListener('click', () => startTrial('dialog'));
   byId('entry-submit-button').addEventListener('click', saveEntryForm);
   byId('settle-submit-button').addEventListener('click', saveSettlementForm);
   byId('cancel-submit-button').addEventListener('click', saveCancelForm);
@@ -1899,6 +2039,7 @@ function bindGlobalEvents() {
       'test-online': testOnlineSettings,
       'open-site': openOnlineSite,
       'refresh-health': refreshHealth,
+      'open-license-dialog': openLicenseDialog,
       'clear-license': clearLicense
     };
 

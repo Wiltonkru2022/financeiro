@@ -8,6 +8,15 @@ const {
 } = require('../db/database');
 const { listEntries } = require('./financeService');
 
+const DEFAULT_LICENSE_API_URL = 'https://sfinvquyuspingeqjamz.supabase.co/functions/v1/licenses';
+const DEFAULT_SITE_URL = 'https://github.com/Wiltonkru2022/financeiro/releases/latest';
+const DEFAULT_SUPABASE_URL = 'https://sfinvquyuspingeqjamz.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_R5z0B2_UHE0UrJ3TdTmAGg_3iaaeC0z';
+
+function isPlainObject(value) {
+  return value && typeof value === 'object' && !Array.isArray(value);
+}
+
 function getSetting(database, key, fallback) {
   const row = database.prepare('SELECT value_json FROM app_settings WHERE key = ?').get(key);
 
@@ -16,7 +25,16 @@ function getSetting(database, key, fallback) {
   }
 
   try {
-    return JSON.parse(row.value_json);
+    const parsed = JSON.parse(row.value_json);
+
+    if (
+      isPlainObject(fallback) &&
+      isPlainObject(parsed)
+    ) {
+      return { ...fallback, ...parsed };
+    }
+
+    return parsed;
   } catch (_error) {
     return fallback;
   }
@@ -39,25 +57,65 @@ function updateSetting(database, key, value) {
 }
 
 function getSettings(database) {
-  return {
+  const defaultNotifications = {
+    enabled: true,
+    dueSoonDays: 3,
+    dailySummaryOnStartup: true
+  };
+  const defaultLicense = {
+    apiUrl: DEFAULT_LICENSE_API_URL,
+    revalidateEveryDays: 7,
+    offlineGraceDays: 14,
+    requireActivation: true
+  };
+  const defaultOnline = {
+    siteUrl: DEFAULT_SITE_URL,
+    supabaseUrl: DEFAULT_SUPABASE_URL,
+    supabaseAnonKey: DEFAULT_SUPABASE_ANON_KEY,
+    syncEnabled: false
+  };
+  const settings = {
     notifications: getSetting(database, 'notifications', {
-      enabled: true,
-      dueSoonDays: 3,
-      dailySummaryOnStartup: true
+      ...defaultNotifications
     }),
     license: getSetting(database, 'license', {
-      apiUrl: 'https://sfinvquyuspingeqjamz.supabase.co/functions/v1/licenses',
-      revalidateEveryDays: 7,
-      offlineGraceDays: 14,
-      requireActivation: true
+      ...defaultLicense
     }),
     online: getSetting(database, 'online', {
-      siteUrl: 'https://github.com/Wiltonkru2022/financeiro/releases/latest',
-      supabaseUrl: 'https://sfinvquyuspingeqjamz.supabase.co',
-      supabaseAnonKey: 'sb_publishable_R5z0B2_UHE0UrJ3TdTmAGg_3iaaeC0z',
-      syncEnabled: false
+      ...defaultOnline
     })
   };
+
+  settings.notifications = {
+    ...defaultNotifications,
+    ...(isPlainObject(settings.notifications) ? settings.notifications : {})
+  };
+  settings.license = {
+    ...defaultLicense,
+    ...(isPlainObject(settings.license) ? settings.license : {})
+  };
+  settings.online = {
+    ...defaultOnline,
+    ...(isPlainObject(settings.online) ? settings.online : {})
+  };
+
+  if (!settings.license.apiUrl || /localhost:3877/i.test(settings.license.apiUrl)) {
+    settings.license.apiUrl = DEFAULT_LICENSE_API_URL;
+  }
+
+  if (!settings.online.siteUrl || /wiltonkru2022\.github\.io/i.test(settings.online.siteUrl)) {
+    settings.online.siteUrl = DEFAULT_SITE_URL;
+  }
+
+  if (!settings.online.supabaseUrl) {
+    settings.online.supabaseUrl = DEFAULT_SUPABASE_URL;
+  }
+
+  if (!settings.online.supabaseAnonKey) {
+    settings.online.supabaseAnonKey = DEFAULT_SUPABASE_ANON_KEY;
+  }
+
+  return settings;
 }
 
 function createBackup(database, targetPath) {
