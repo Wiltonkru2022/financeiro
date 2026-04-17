@@ -29,6 +29,7 @@
 *.db-journal
 *.sqlite
 *.sqlite3
+supabase/.temp/
 
 # misc
 .DS_Store
