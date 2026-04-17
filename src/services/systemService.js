@@ -50,6 +50,12 @@ function getSettings(database) {
       revalidateEveryDays: 7,
       offlineGraceDays: 14,
       requireActivation: true
+    }),
+    online: getSetting(database, 'online', {
+      siteUrl: 'https://wiltonkru2022.github.io/financeiro',
+      supabaseUrl: '',
+      supabaseAnonKey: '',
+      syncEnabled: false
     })
   };
 }

@@ -223,6 +223,16 @@ function seedDefaults(database) {
       })
     );
 
+    insertSettingIfMissing.run(
+      'online',
+      JSON.stringify({
+        siteUrl: 'https://wiltonkru2022.github.io/financeiro',
+        supabaseUrl: '',
+        supabaseAnonKey: '',
+        syncEnabled: false
+      })
+    );
+
     insertUser.run();
   });
 }

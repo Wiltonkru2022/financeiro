@@ -23,6 +23,7 @@
           </div>
           <div class="window-controls">
             <button data-window-action="minimize" type="button" aria-label="Minimizar">-</button>
+            <button data-window-action="maximize" type="button" aria-label="Maximizar">[]</button>
             <button data-window-action="close" type="button" aria-label="Fechar">x</button>
           </div>
         </header>
@@ -52,7 +53,7 @@
               <strong>Precisa de ajuda?</strong>
               <span>Suporte: suporte@financepro.com.br</span>
             </footer>
-            <p class="secure-line">Licenca valida para um dispositivo • Conexao segura</p>
+            <p class="secure-line">Licenca valida para um dispositivo - Conexao segura</p>
           </main>
         </div>
       </div>
@@ -100,6 +101,7 @@
             </div>
             <div class="window-controls shell-controls">
               <button data-window-action="minimize" type="button" aria-label="Minimizar">-</button>
+              <button data-window-action="maximize" type="button" aria-label="Maximizar">[]</button>
               <button data-window-action="close" type="button" aria-label="Fechar">x</button>
             </div>
           </div>
@@ -118,7 +120,7 @@
             <p class="eyebrow">Lancamento</p>
             <h3 id="entry-dialog-title">Novo lancamento</h3>
           </div>
-          <button class="icon-button" value="cancel" type="submit">x</button>
+          <button class="icon-button" data-dialog-close="entry-dialog" type="button">x</button>
         </header>
 
         <input type="hidden" id="entry-id" name="id" />
@@ -188,22 +190,22 @@
 
           <label>
             Valor
-            <input id="entry-amount-total" name="amount_total" type="number" min="0.01" step="0.01" required />
+            <input id="entry-amount-total" name="amount_total" inputmode="decimal" data-money required placeholder="0,00" />
           </label>
 
           <label>
             Desconto
-            <input id="entry-discount" name="amount_discount" type="number" min="0" step="0.01" />
+            <input id="entry-discount" name="amount_discount" inputmode="decimal" data-money placeholder="0,00" />
           </label>
 
           <label>
             Juros
-            <input id="entry-interest" name="amount_interest" type="number" min="0" step="0.01" />
+            <input id="entry-interest" name="amount_interest" inputmode="decimal" data-money placeholder="0,00" />
           </label>
 
           <label>
             Multa
-            <input id="entry-penalty" name="amount_penalty" type="number" min="0" step="0.01" />
+            <input id="entry-penalty" name="amount_penalty" inputmode="decimal" data-money placeholder="0,00" />
           </label>
 
           <label>
@@ -241,7 +243,7 @@
         </div>
 
         <footer class="modal-actions">
-          <button class="ghost" value="cancel" type="submit">Cancelar</button>
+          <button class="ghost" data-dialog-close="entry-dialog" type="button">Cancelar</button>
           <button class="primary" id="entry-submit-button" type="button">Salvar lancamento</button>
         </footer>
       </form>
@@ -254,7 +256,7 @@
             <p class="eyebrow">Cancelamento</p>
             <h3>Cancelar lancamento</h3>
           </div>
-          <button class="icon-button" value="cancel" type="submit">x</button>
+          <button class="icon-button" data-dialog-close="cancel-dialog" type="button">x</button>
         </header>
 
         <input type="hidden" id="cancel-entry-id" name="id" />
@@ -266,7 +268,7 @@
         </label>
 
         <footer class="modal-actions">
-          <button class="ghost" value="cancel" type="submit">Voltar</button>
+          <button class="ghost" data-dialog-close="cancel-dialog" type="button">Voltar</button>
           <button class="danger" id="cancel-submit-button" type="button">Confirmar cancelamento</button>
         </footer>
       </form>
@@ -279,7 +281,7 @@
             <p class="eyebrow">Baixa financeira</p>
             <h3 id="settle-title">Registrar pagamento/recebimento</h3>
           </div>
-          <button class="icon-button" value="cancel" type="submit">x</button>
+          <button class="icon-button" data-dialog-close="settle-dialog" type="button">x</button>
         </header>
 
         <input type="hidden" id="settle-entry-id" name="id" />
@@ -293,22 +295,22 @@
 
           <label>
             Valor baixado
-            <input id="settle-amount" name="amount" type="number" min="0.01" step="0.01" required />
+            <input id="settle-amount" name="amount" inputmode="decimal" data-money required placeholder="0,00" />
           </label>
 
           <label>
             Desconto
-            <input id="settle-discount" name="discount" type="number" min="0" step="0.01" />
+            <input id="settle-discount" name="discount" inputmode="decimal" data-money placeholder="0,00" />
           </label>
 
           <label>
             Juros
-            <input id="settle-interest" name="interest" type="number" min="0" step="0.01" />
+            <input id="settle-interest" name="interest" inputmode="decimal" data-money placeholder="0,00" />
           </label>
 
           <label>
             Multa
-            <input id="settle-penalty" name="penalty" type="number" min="0" step="0.01" />
+            <input id="settle-penalty" name="penalty" inputmode="decimal" data-money placeholder="0,00" />
           </label>
 
           <label class="span-2">
@@ -318,7 +320,7 @@
         </div>
 
         <footer class="modal-actions">
-          <button class="ghost" value="cancel" type="submit">Cancelar</button>
+          <button class="ghost" data-dialog-close="settle-dialog" type="button">Cancelar</button>
           <button class="primary" id="settle-submit-button" type="button">Confirmar baixa</button>
         </footer>
       </form>
@@ -331,7 +333,7 @@
             <p class="eyebrow">Cadastro</p>
             <h3 id="catalog-title">Novo cadastro</h3>
           </div>
-          <button class="icon-button" value="cancel" type="submit">x</button>
+          <button class="icon-button" data-dialog-close="catalog-dialog" type="button">x</button>
         </header>
 
         <input type="hidden" id="catalog-kind" name="kind" />
@@ -339,8 +341,53 @@
         <div class="form-grid two" id="catalog-fields"></div>
 
         <footer class="modal-actions">
-          <button class="ghost" value="cancel" type="submit">Cancelar</button>
+          <button class="ghost" data-dialog-close="catalog-dialog" type="button">Cancelar</button>
           <button class="primary" id="catalog-submit-button" type="button">Salvar cadastro</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <dialog class="modal" id="user-dialog">
+      <form method="dialog" id="user-form" class="modal-card compact">
+        <header class="modal-header">
+          <div>
+            <p class="eyebrow">Equipe</p>
+            <h3 id="user-title">Novo usuario</h3>
+          </div>
+          <button class="icon-button" data-dialog-close="user-dialog" type="button">x</button>
+        </header>
+
+        <input type="hidden" id="user-id" name="id" />
+        <div class="form-grid two">
+          <label>
+            Nome
+            <input id="user-name" name="name" required maxlength="120" />
+          </label>
+          <label>
+            Email
+            <input id="user-email" name="email" type="email" maxlength="180" />
+          </label>
+          <label>
+            Perfil
+            <select id="user-role" name="role" required>
+              <option value="admin">Administrador</option>
+              <option value="manager">Gerente</option>
+              <option value="operator">Operador</option>
+              <option value="viewer">Consulta</option>
+            </select>
+          </label>
+          <label>
+            Status
+            <select id="user-is-active" name="is_active">
+              <option value="1">Ativo</option>
+              <option value="0">Inativo</option>
+            </select>
+          </label>
+        </div>
+
+        <footer class="modal-actions">
+          <button class="ghost" data-dialog-close="user-dialog" type="button">Cancelar</button>
+          <button class="primary" id="user-submit-button" type="button">Salvar usuario</button>
         </footer>
       </form>
     </dialog>

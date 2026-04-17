@@ -1,0 +1,21 @@
+TERMOS DE USO - FINANCEPRO
+
+Ao instalar e usar o FinancePro, o cliente declara que entende e aceita estes termos.
+
+1. Licenca
+O FinancePro e licenciado para uso em 1 computador por chave ativa. A chave nao pode ser revendida, compartilhada ou usada para liberar copias nao autorizadas.
+
+2. Dados
+Os dados financeiros cadastrados pelo usuario ficam sob responsabilidade do usuario. O sistema oferece backup local e recursos de exportacao para ajudar na seguranca das informacoes.
+
+3. Ativacao
+A ativacao pode exigir conexao com a internet para validar e registrar a chave do produto. A chave pode ser bloqueada em caso de uso irregular.
+
+4. Suporte e atualizacoes
+O Plano Profissional inclui suporte e atualizacoes conforme a vigencia da licenca contratada.
+
+5. Limitacao
+O sistema ajuda na organizacao financeira, mas nao substitui consultoria contabil, fiscal ou juridica.
+
+6. Aceite
+Ao continuar a instalacao, o usuario confirma que leu e concorda com estes termos.

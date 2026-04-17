@@ -1,20 +1,22 @@
 :root {
-  --bg: #07101d;
-  --bg-deep: #040912;
-  --panel: rgba(13, 24, 39, 0.86);
-  --panel-soft: rgba(20, 35, 55, 0.78);
-  --panel-strong: rgba(8, 17, 29, 0.94);
-  --line: rgba(150, 178, 215, 0.14);
-  --line-strong: rgba(170, 198, 235, 0.28);
-  --text: #e8f0fb;
-  --muted: #8798ad;
-  --muted-strong: #b7c3d4;
-  --blue: #3378e8;
-  --blue-light: #74adff;
-  --cyan: #41d4df;
-  --green: #78c587;
-  --yellow: #d8b35c;
-  --red: #e15d6d;
+  --bg: #111b21;
+  --bg-deep: #0b141a;
+  --panel: rgba(32, 44, 51, 0.94);
+  --panel-soft: rgba(42, 57, 66, 0.82);
+  --panel-strong: rgba(24, 34, 41, 0.96);
+  --line: rgba(134, 150, 160, 0.16);
+  --line-strong: rgba(134, 150, 160, 0.3);
+  --text: #e9edef;
+  --muted: #8696a0;
+  --muted-strong: #d1d7db;
+  --blue: #53bdeb;
+  --blue-light: #7fd1ff;
+  --cyan: #00a884;
+  --green: #25d366;
+  --yellow: #ffd166;
+  --red: #ff6b7a;
+  --olive-dark: #005c4b;
+  --danger: #ff6b7a;
   --shadow: 0 22px 70px rgba(0, 0, 0, 0.44);
   --font-ui: "Segoe UI Variable", "Segoe UI", Arial, sans-serif;
 }
@@ -34,9 +36,8 @@ body {
   color: var(--text);
   font-family: var(--font-ui);
   background:
-    linear-gradient(90deg, rgba(5, 11, 22, 0.96), rgba(8, 18, 32, 0.82)),
-    radial-gradient(circle at 78% 30%, rgba(84, 127, 186, 0.24), transparent 28%),
-    linear-gradient(135deg, #050b14 0%, #0d1a2b 52%, #040911 100%);
+    linear-gradient(180deg, rgba(17, 27, 33, 0.98), rgba(11, 20, 26, 0.98)),
+    linear-gradient(135deg, #111b21 0%, #0b141a 100%);
   overflow: hidden;
 }
 
@@ -50,11 +51,9 @@ body::after {
 
 body::before {
   background:
-    linear-gradient(120deg, transparent 58%, rgba(112, 154, 219, 0.1) 59%, transparent 70%),
-    radial-gradient(circle at 85% 52%, rgba(255, 255, 255, 0.12), transparent 2%),
-    radial-gradient(circle at 92% 36%, rgba(255, 255, 255, 0.1), transparent 2%),
-    radial-gradient(circle at 75% 68%, rgba(255, 255, 255, 0.08), transparent 2%);
-  opacity: 0.8;
+    linear-gradient(120deg, transparent 58%, rgba(0, 168, 132, 0.08) 59%, transparent 70%),
+    linear-gradient(90deg, rgba(32, 44, 51, 0.32), transparent);
+  opacity: 0.72;
 }
 
 body::after {
@@ -85,10 +84,8 @@ button {
   place-items: center;
   padding: 32px;
   background:
-    linear-gradient(rgba(4, 10, 20, 0.62), rgba(4, 10, 20, 0.74)),
-    radial-gradient(circle at 72% 58%, rgba(255, 255, 255, 0.12), transparent 2%),
-    radial-gradient(circle at 86% 48%, rgba(255, 255, 255, 0.1), transparent 2%),
-    linear-gradient(135deg, #050b14, #142238 46%, #050b14);
+    linear-gradient(rgba(11, 20, 26, 0.76), rgba(11, 20, 26, 0.88)),
+    linear-gradient(135deg, #111b21, #202c33 48%, #0b141a);
 }
 
 .activation-screen[hidden] {
@@ -102,9 +99,7 @@ button {
   border: 1px solid rgba(166, 194, 233, 0.22);
   border-radius: 6px;
   background:
-    linear-gradient(120deg, rgba(5, 13, 25, 0.92) 0%, rgba(14, 29, 48, 0.88) 52%, rgba(16, 32, 51, 0.64) 100%),
-    radial-gradient(circle at 85% 55%, rgba(255, 255, 255, 0.13), transparent 2%),
-    radial-gradient(circle at 76% 62%, rgba(255, 255, 255, 0.12), transparent 2%);
+    linear-gradient(120deg, rgba(17, 27, 33, 0.96) 0%, rgba(32, 44, 51, 0.94) 52%, rgba(42, 57, 66, 0.76) 100%);
   box-shadow: 0 34px 120px rgba(0, 0, 0, 0.64);
 }
 
@@ -154,14 +149,14 @@ button {
   width: 58px;
   height: 52px;
   gap: 4px;
-  filter: drop-shadow(0 10px 18px rgba(38, 111, 226, 0.24));
+  filter: drop-shadow(0 10px 18px rgba(0, 168, 132, 0.24));
 }
 
 .finance-logo i {
   display: block;
   width: 8px;
   border-radius: 2px 2px 0 0;
-  background: linear-gradient(180deg, #8fc2ff, #2f74e7);
+  background: linear-gradient(180deg, #25d366, #00a884);
 }
 
 .finance-logo i:nth-child(1) { height: 22px; }
@@ -176,8 +171,8 @@ button {
   right: 0;
   bottom: 2px;
   height: 24px;
-  border-bottom: 3px solid rgba(130, 180, 255, 0.72);
-  border-right: 3px solid rgba(130, 180, 255, 0.72);
+  border-bottom: 3px solid rgba(37, 211, 102, 0.72);
+  border-right: 3px solid rgba(37, 211, 102, 0.72);
   transform: skewX(-26deg) rotate(-18deg);
 }
 
@@ -200,8 +195,8 @@ button {
   overflow: hidden;
   padding: 52px 40px;
   background:
-    linear-gradient(135deg, rgba(10, 23, 39, 0.2), rgba(27, 54, 86, 0.32)),
-    linear-gradient(120deg, transparent 18%, rgba(91, 141, 210, 0.13) 19%, transparent 40%);
+    linear-gradient(135deg, rgba(17, 27, 33, 0.2), rgba(42, 57, 66, 0.36)),
+    linear-gradient(120deg, transparent 18%, rgba(0, 168, 132, 0.12) 19%, transparent 40%);
 }
 
 .activation-art::before {
@@ -211,8 +206,8 @@ button {
   top: 256px;
   width: 420px;
   height: 170px;
-  border-top: 6px solid rgba(93, 142, 209, 0.14);
-  border-right: 6px solid rgba(93, 142, 209, 0.13);
+  border-top: 6px solid rgba(0, 168, 132, 0.16);
+  border-right: 6px solid rgba(0, 168, 132, 0.14);
   transform: rotate(-22deg);
 }
 
@@ -224,8 +219,8 @@ button {
   width: 180px;
   height: 210px;
   background:
-    linear-gradient(180deg, rgba(124, 181, 255, 0.44), rgba(34, 85, 150, 0.14)),
-    linear-gradient(90deg, transparent 0 18%, rgba(5, 15, 28, 0.78) 18% 24%, transparent 24% 42%, rgba(5, 15, 28, 0.78) 42% 48%, transparent 48% 66%, rgba(5, 15, 28, 0.78) 66% 72%, transparent 72%);
+    linear-gradient(180deg, rgba(37, 211, 102, 0.38), rgba(0, 92, 75, 0.18)),
+    linear-gradient(90deg, transparent 0 18%, rgba(11, 20, 26, 0.78) 18% 24%, transparent 24% 42%, rgba(11, 20, 26, 0.78) 42% 48%, transparent 48% 66%, rgba(11, 20, 26, 0.78) 66% 72%, transparent 72%);
   clip-path: polygon(7% 78%, 28% 72%, 28% 56%, 49% 50%, 49% 32%, 72% 24%, 72% 0, 100% 0, 100% 100%, 7% 100%);
   opacity: 0.44;
 }
@@ -244,7 +239,7 @@ button {
 .chart-bars span {
   width: 26px;
   border-radius: 3px 3px 0 0;
-  background: linear-gradient(180deg, #7eb7ff, #1959ad);
+  background: linear-gradient(180deg, #25d366, #00a884);
   opacity: 0.58;
 }
 
@@ -336,8 +331,8 @@ button {
   color: #fff;
   font-size: 1.28rem;
   font-weight: 700;
-  background: linear-gradient(180deg, #76b1ff 0%, #2f73df 50%, #1f52a8 100%);
-  box-shadow: 0 14px 30px rgba(31, 82, 168, 0.34), inset 0 1px rgba(255, 255, 255, 0.34);
+  background: linear-gradient(180deg, #25d366 0%, #00a884 52%, #005c4b 100%);
+  box-shadow: 0 14px 30px rgba(0, 168, 132, 0.28), inset 0 1px rgba(255, 255, 255, 0.28);
 }
 
 .activation-link {
@@ -410,8 +405,8 @@ button {
   flex-direction: column;
   min-height: 100vh;
   padding: 24px 16px;
-  border-right: 1px solid rgba(150, 178, 215, 0.12);
-  background: rgba(4, 12, 23, 0.82);
+  border-right: 1px solid rgba(134, 150, 160, 0.14);
+  background: rgba(17, 27, 33, 0.96);
   box-shadow: 20px 0 60px rgba(0, 0, 0, 0.22);
 }
 
@@ -450,7 +445,7 @@ button {
 .menu-item:hover,
 .menu-item.active {
   color: #fff;
-  background: linear-gradient(90deg, rgba(52, 119, 231, 0.92), rgba(48, 105, 198, 0.66));
+  background: linear-gradient(90deg, rgba(0, 168, 132, 0.92), rgba(0, 92, 75, 0.72));
 }
 
 .menu-icon {
@@ -506,6 +501,18 @@ button {
   border-radius: 999px;
 }
 
+.menu-icon.users::before {
+  left: 1px;
+  right: 7px;
+  border-radius: 999px;
+}
+
+.menu-icon.users::after {
+  left: 8px;
+  right: 1px;
+  border-radius: 999px;
+}
+
 .sidebar-user {
   display: grid;
   grid-template-columns: 32px 1fr;
@@ -530,7 +537,7 @@ button {
   height: 32px;
   border-radius: 999px;
   color: #fff;
-  background: linear-gradient(180deg, #6f8aa8, #26394f);
+  background: linear-gradient(180deg, #25d366, #005c4b);
   font-weight: 800;
 }
 
@@ -558,8 +565,8 @@ button {
   min-height: 70px;
   margin: 0 -22px 22px;
   padding: 0 18px 0 20px;
-  border-bottom: 1px solid rgba(150, 178, 215, 0.12);
-  background: rgba(5, 13, 24, 0.9);
+  border-bottom: 1px solid rgba(134, 150, 160, 0.14);
+  background: rgba(32, 44, 51, 0.94);
   backdrop-filter: blur(12px);
   -webkit-app-region: drag;
 }
@@ -640,7 +647,7 @@ button {
   height: 34px;
   padding-left: 34px;
   border-radius: 999px;
-  background: rgba(8, 17, 30, 0.9);
+  background: rgba(17, 27, 33, 0.92);
 }
 
 .admin-chip {
@@ -657,7 +664,7 @@ button {
   width: 34px;
   height: 34px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(134, 150, 160, 0.08);
 }
 
 .icon-top::before {
@@ -679,7 +686,7 @@ button {
   width: 8px;
   height: 8px;
   border-radius: 999px;
-  background: var(--red);
+  background: var(--green);
 }
 
 .shell-controls button {
@@ -743,7 +750,7 @@ button {
   width: 28px;
   height: 22px;
   border-radius: 3px;
-  background: linear-gradient(135deg, rgba(90, 150, 245, 0.34), rgba(255, 255, 255, 0.04));
+  background: linear-gradient(135deg, rgba(0, 168, 132, 0.34), rgba(255, 255, 255, 0.04));
 }
 
 .metric-card span,
@@ -763,16 +770,16 @@ button {
 
 .metric-card.moss strong,
 .money-in {
-  color: #86f0e7;
+  color: #25d366;
 }
 
 .metric-card.clay strong,
 .money-out {
-  color: #ff8090;
+  color: #ff6b7a;
 }
 
 .metric-card.slate strong {
-  color: #cfe3ff;
+  color: #d1fddf;
 }
 
 .dashboard-grid {
@@ -819,7 +826,7 @@ button {
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: 6px;
-  background: rgba(5, 13, 24, 0.42);
+  background: rgba(17, 27, 33, 0.52);
 }
 
 .field-inline {
@@ -843,7 +850,7 @@ textarea {
   border: 1px solid rgba(150, 178, 215, 0.16);
   border-radius: 4px;
   color: var(--text);
-  background: rgba(6, 14, 25, 0.86);
+  background: rgba(17, 27, 33, 0.9);
   outline: none;
 }
 
@@ -858,8 +865,8 @@ textarea {
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: rgba(87, 145, 240, 0.8);
-  box-shadow: 0 0 0 3px rgba(51, 120, 232, 0.14);
+  border-color: rgba(0, 168, 132, 0.84);
+  box-shadow: 0 0 0 3px rgba(0, 168, 132, 0.14);
 }
 
 label {
@@ -891,7 +898,7 @@ label small {
 
 .primary {
   color: #fff;
-  background: linear-gradient(180deg, #4d92ff, #235fc4);
+  background: linear-gradient(180deg, #25d366, #00a884);
 }
 
 .ghost,
@@ -902,7 +909,7 @@ label small {
 
 .danger {
   color: #fff;
-  background: linear-gradient(180deg, #d85d6a, #9e3341);
+  background: linear-gradient(180deg, #ff6b7a, #b83b4a);
 }
 
 .primary:hover,
@@ -1018,11 +1025,11 @@ td.actions {
   flex: 1;
   min-width: 8px;
   border-radius: 3px 3px 0 0;
-  background: linear-gradient(180deg, rgba(92, 221, 211, 0.72), rgba(42, 143, 165, 0.42));
+  background: linear-gradient(180deg, rgba(37, 211, 102, 0.72), rgba(0, 168, 132, 0.42));
 }
 
 .flow-bar.payable {
-  background: linear-gradient(180deg, rgba(255, 128, 144, 0.62), rgba(161, 53, 68, 0.32));
+  background: linear-gradient(180deg, rgba(255, 107, 122, 0.62), rgba(184, 59, 74, 0.32));
 }
 
 .chart-line {
@@ -1035,9 +1042,9 @@ td.actions {
 
 .chart-line polyline {
   fill: none;
-  stroke: #4bd9e3;
+  stroke: #25d366;
   stroke-width: 2;
-  filter: drop-shadow(0 0 8px rgba(75, 217, 227, 0.32));
+  filter: drop-shadow(0 0 8px rgba(37, 211, 102, 0.3));
 }
 
 .chart-legend,
@@ -1081,11 +1088,11 @@ td.actions {
   display: block;
   min-height: 10px;
   border-radius: 3px 3px 0 0;
-  background: linear-gradient(180deg, #70adff, #2b65c8);
+  background: linear-gradient(180deg, #53bdeb, #0a6c8f);
 }
 
 .mini-bars.received span {
-  background: linear-gradient(180deg, #7cf4e9, #2a8fa5);
+  background: linear-gradient(180deg, #25d366, #00a884);
 }
 
 .entry-list {
@@ -1100,7 +1107,7 @@ td.actions {
   padding: 12px;
   border: 1px solid rgba(150, 178, 215, 0.08);
   border-radius: 6px;
-  background: rgba(5, 13, 24, 0.42);
+  background: rgba(17, 27, 33, 0.5);
 }
 
 .entry-item h4,
@@ -1132,7 +1139,7 @@ td.actions {
 
 .tab.active {
   color: #fff;
-  background: linear-gradient(180deg, #4d92ff, #235fc4);
+  background: linear-gradient(180deg, #25d366, #00a884);
 }
 
 .backup-grid {
@@ -1235,7 +1242,7 @@ td.actions {
   padding: 12px;
   border: 1px solid rgba(150, 178, 215, 0.1);
   border-radius: 6px;
-  background: rgba(5, 13, 24, 0.42);
+  background: rgba(17, 27, 33, 0.52);
 }
 
 .health-dot {
@@ -1291,7 +1298,7 @@ td.actions {
   padding: 22px;
   border: 1px solid var(--line-strong);
   border-radius: 6px;
-  background: rgba(8, 18, 31, 0.98);
+  background: rgba(32, 44, 51, 0.98);
   box-shadow: var(--shadow);
 }
 

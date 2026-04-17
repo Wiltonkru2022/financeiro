@@ -40,8 +40,10 @@ function runNotificationScan(database, options = {}) {
 
   if (messages.length > 0 && shouldShow && Notification.isSupported()) {
     const notification = new Notification({
-      title: 'FinancePro',
-      body: messages.join(' | ')
+      title: 'FinancePro - alerta financeiro',
+      body: messages.slice(0, 4).join('\n'),
+      silent: false,
+      urgency: messages.some((message) => message.includes('vencida')) ? 'critical' : 'normal'
     });
 
     notification.show();

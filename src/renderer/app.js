@@ -9,6 +9,7 @@ const state = {
   health: null,
   view: 'dashboard',
   entries: [],
+  users: [],
   catalogKind: 'parties',
   catalogRows: [],
   audit: [],
@@ -31,6 +32,7 @@ const viewMeta = {
   catalog_categories: ['Cadastros', 'Categorias'],
   catalog_cost_centers: ['Cadastros', 'Centro de Custo'],
   reports: ['Relatorios', 'Relatorio Mensal'],
+  users: ['Equipe', 'Usuarios do sistema'],
   health: ['Sistema', 'Licenca e Saude'],
   backup: ['Sistema', 'Configuracoes']
 };
@@ -60,6 +62,13 @@ const planLabels = {
   single: 'Unica',
   fixed: 'Fixa mensal',
   installment: 'Parcelada'
+};
+
+const roleLabels = {
+  admin: 'Administrador',
+  manager: 'Gerente',
+  operator: 'Operador',
+  viewer: 'Consulta'
 };
 
 const catalogConfigs = {
@@ -130,7 +139,7 @@ const catalogConfigs = {
         ]
       },
       { name: 'institution', label: 'Instituicao' },
-      { name: 'current_balance', label: 'Saldo atual', type: 'number' },
+      { name: 'current_balance', label: 'Saldo atual', type: 'money' },
       { name: 'notes', label: 'Observacoes', type: 'textarea' }
     ],
     columns: [
@@ -176,6 +185,58 @@ function formatCurrency(value) {
     style: 'currency',
     currency: 'BRL'
   }).format(Number(value || 0));
+}
+
+function parseMoneyInput(value) {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  if (value === null || value === undefined || value === '') {
+    return 0;
+  }
+
+  const cleaned = String(value)
+    .trim()
+    .replace(/\s/g, '')
+    .replace(/R\$/gi, '')
+    .replace(/[^\d,.-]/g, '');
+
+  if (!cleaned) {
+    return 0;
+  }
+
+  const lastComma = cleaned.lastIndexOf(',');
+  const lastDot = cleaned.lastIndexOf('.');
+  let normalized = cleaned;
+
+  if (lastComma > lastDot) {
+    normalized = cleaned.replace(/\./g, '').replace(',', '.');
+  } else if (lastDot > -1 && lastComma > -1) {
+    normalized = cleaned.replace(/,/g, '');
+  } else {
+    normalized = cleaned.replace(',', '.');
+  }
+
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function formatMoneyInput(value, emptyWhenZero = false) {
+  const amount = parseMoneyInput(value);
+
+  if (emptyWhenZero && amount === 0) {
+    return '';
+  }
+
+  return new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(amount);
+}
+
+function setMoneyField(id, value, emptyWhenZero = false) {
+  byId(id).value = value === null || value === undefined || value === '' ? '' : formatMoneyInput(value, emptyWhenZero);
 }
 
 function formatDate(value) {
@@ -263,6 +324,10 @@ async function refreshAll() {
     state.health = await api.getHealth();
   }
 
+  if (state.view === 'users') {
+    await loadUsers();
+  }
+
   renderNav();
   render();
 }
@@ -288,6 +353,10 @@ async function loadCatalog() {
   state.catalogRows = await api.listCatalog(state.catalogKind);
 }
 
+async function loadUsers() {
+  state.users = await api.listUsers();
+}
+
 async function setView(view) {
   state.view = view;
 
@@ -306,6 +375,10 @@ async function setView(view) {
 
   if (view === 'health') {
     state.health = await api.getHealth();
+  }
+
+  if (view === 'users') {
+    await loadUsers();
   }
 
   renderNav();
@@ -341,6 +414,7 @@ function render() {
     catalog_parties: () => renderCatalogs('parties'),
     catalog_categories: () => renderCatalogs('categories'),
     catalog_cost_centers: () => renderCatalogs('cost_centers'),
+    users: renderUsers,
     reports: renderReports,
     health: renderHealth,
     backup: renderBackup
@@ -820,6 +894,59 @@ function renderCatalogTable() {
   `;
 }
 
+function renderUsers() {
+  const root = byId('view-root');
+
+  root.innerHTML = `
+    <section class="table-card">
+      <div class="list-header">
+        <div>
+          <h3>Usuarios</h3>
+          <p class="muted">${state.users.length} pessoa(s) com acesso local</p>
+        </div>
+        <button class="primary" data-action="user-new" type="button">Novo usuario</button>
+      </div>
+      ${renderUsersTable()}
+    </section>
+  `;
+}
+
+function renderUsersTable() {
+  if (!state.users.length) {
+    return `<div class="empty-state">Nenhum usuario cadastrado.</div>`;
+  }
+
+  return `
+    <table>
+      <thead>
+        <tr><th>Nome</th><th>Email</th><th>Perfil</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody>
+        ${state.users
+          .map(
+            (user) => `
+              <tr>
+                <td><strong>${escapeHtml(user.name)}</strong></td>
+                <td>${escapeHtml(user.email || '-')}</td>
+                <td><span class="badge">${escapeHtml(roleLabels[user.role] || user.role)}</span></td>
+                <td><span class="status ${user.is_active ? 'settled' : 'cancelled'}">${user.is_active ? 'Ativo' : 'Inativo'}</span></td>
+                <td class="actions">
+                  <button class="ghost" data-action="user-edit" data-id="${user.id}" type="button">Editar</button>
+                  ${
+                    user.is_active
+                      ? `<button class="danger" data-action="user-delete" data-id="${user.id}" type="button">Inativar</button>`
+                      : ''
+                  }
+                </td>
+              </tr>
+            `
+          )
+          .join('')}
+      </tbody>
+    </table>
+  `;
+}
+
 function formatCatalogValue(field, value) {
   if (field === 'current_balance') {
     return formatCurrency(value);
@@ -1088,6 +1215,7 @@ function renderAudit() {
 
 function renderBackup() {
   const notifications = state.settings.notifications;
+  const online = state.settings.online || {};
   const root = byId('view-root');
 
   root.innerHTML = `
@@ -1138,6 +1266,39 @@ function renderBackup() {
         <button class="primary" data-action="save-settings" type="button">Salvar configuracoes</button>
       </div>
     </section>
+
+    <section class="table-card" style="margin-top:16px">
+      <div class="panel-header">
+        <h3>Conexao online</h3>
+        <span class="muted">Site, download e Supabase</span>
+      </div>
+      <div class="form-grid two">
+        <label>
+          Site online
+          <input id="setting-site-url" value="${escapeHtml(online.siteUrl || '')}" placeholder="https://seudominio.com.br/financeiro" />
+        </label>
+        <label>
+          Sincronizacao
+          <select id="setting-sync-enabled">
+            ${option('true', 'Ativar quando Supabase estiver pronto', String(online.syncEnabled === true))}
+            ${option('false', 'Somente local por enquanto', String(online.syncEnabled === true))}
+          </select>
+        </label>
+        <label>
+          Supabase URL
+          <input id="setting-supabase-url" value="${escapeHtml(online.supabaseUrl || '')}" placeholder="https://xxxx.supabase.co" />
+        </label>
+        <label>
+          Supabase anon key
+          <input id="setting-supabase-anon-key" value="${escapeHtml(online.supabaseAnonKey || '')}" placeholder="Cole a chave anon public" />
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button class="ghost" data-action="open-site" type="button">Abrir site</button>
+        <button class="soft-button" data-action="test-online" type="button">Testar conexao</button>
+        <button class="primary" data-action="save-settings" type="button">Salvar conexao</button>
+      </div>
+    </section>
   `;
 }
 
@@ -1166,10 +1327,10 @@ function openEntryDialog(type = 'payable', entry = null) {
   byId('entry-issue-date').value = entry?.issue_date || today;
   byId('entry-competence-date').value = entry?.competence_date || today;
   byId('entry-due-date').value = entry?.due_date || today;
-  byId('entry-amount-total').value = entry?.amount_total || '';
-  byId('entry-discount').value = entry?.amount_discount || 0;
-  byId('entry-interest').value = entry?.amount_interest || 0;
-  byId('entry-penalty').value = entry?.amount_penalty || 0;
+  setMoneyField('entry-amount-total', entry?.amount_total || '', true);
+  setMoneyField('entry-discount', entry?.amount_discount || 0);
+  setMoneyField('entry-interest', entry?.amount_interest || 0);
+  setMoneyField('entry-penalty', entry?.amount_penalty || 0);
   byId('entry-status').value = entry?.status || 'open';
   byId('entry-installments').value = entry?.installment_total || 1;
   byId('entry-installment-interval').value = 1;
@@ -1200,7 +1361,7 @@ function refreshPlanFields(isEditing = Boolean(byId('entry-id').value)) {
 }
 
 function updateInstallmentPreview() {
-  const total = Number(byId('entry-amount-total').value || 0);
+  const total = parseMoneyInput(byId('entry-amount-total').value);
   const installments = Math.max(1, Number(byId('entry-installments').value || 1));
   const preview = byId('installment-preview');
   const amount = installments > 0 ? total / installments : 0;
@@ -1208,7 +1369,13 @@ function updateInstallmentPreview() {
 }
 
 function serializeForm(form) {
-  return Object.fromEntries(new FormData(form).entries());
+  const payload = Object.fromEntries(new FormData(form).entries());
+
+  form.querySelectorAll('[data-money][name]').forEach((input) => {
+    payload[input.name] = parseMoneyInput(input.value).toFixed(2);
+  });
+
+  return payload;
 }
 
 async function saveEntryForm() {
@@ -1285,10 +1452,10 @@ async function openSettleDialog(id) {
   byId('settle-title').textContent = entry.entry_type === 'payable' ? 'Registrar pagamento' : 'Registrar recebimento';
   byId('settle-entry-info').textContent = `${entry.description} | Aberto: ${formatCurrency(entry.amount_open)}`;
   byId('settle-date').value = todayLocal();
-  byId('settle-amount').value = Math.max(0, Number(entry.amount_open || 0)).toFixed(2);
-  byId('settle-discount').value = 0;
-  byId('settle-interest').value = 0;
-  byId('settle-penalty').value = 0;
+  setMoneyField('settle-amount', Math.max(0, Number(entry.amount_open || 0)));
+  setMoneyField('settle-discount', 0);
+  setMoneyField('settle-interest', 0);
+  setMoneyField('settle-penalty', 0);
   byId('settle-notes').value = '';
   byId('settle-dialog').showModal();
 }
@@ -1320,6 +1487,7 @@ function openCatalogDialog(kind, row = null) {
   byId('catalog-fields').innerHTML = config.fields
     .map((field) => renderCatalogField(field, row?.[field.name]))
     .join('');
+  bindMoneyMasks();
   dialog.showModal();
 }
 
@@ -1342,6 +1510,15 @@ function renderCatalogField(field, value) {
       <label class="span-2">
         ${escapeHtml(field.label)}
         <textarea name="${field.name}" rows="3">${escapeHtml(value || '')}</textarea>
+      </label>
+    `;
+  }
+
+  if (field.type === 'money') {
+    return `
+      <label>
+        ${escapeHtml(field.label)}
+        <input name="${field.name}" inputmode="decimal" data-money value="${escapeHtml(formatMoneyInput(value || 0))}" />
       </label>
     `;
   }
@@ -1400,6 +1577,50 @@ async function deleteCatalog(id) {
   }, 'Cadastro inativado.');
 }
 
+function openUserDialog(user = null) {
+  byId('user-title').textContent = user ? 'Editar usuario' : 'Novo usuario';
+  byId('user-id').value = user?.id || '';
+  byId('user-name').value = user?.name || '';
+  byId('user-email').value = user?.email || '';
+  byId('user-role').value = user?.role || 'operator';
+  byId('user-is-active').value = String(user?.is_active ?? 1);
+  byId('user-dialog').showModal();
+}
+
+async function saveUserForm() {
+  const form = byId('user-form');
+
+  if (!form.reportValidity()) {
+    return;
+  }
+
+  const payload = serializeForm(form);
+  const id = payload.id;
+  delete payload.id;
+
+  await runSafely(async () => {
+    if (id) {
+      await api.updateUser(Number(id), payload);
+    } else {
+      await api.createUser(payload);
+    }
+
+    byId('user-dialog').close();
+    await refreshAll();
+  }, 'Usuario salvo.');
+}
+
+async function deleteUser(id) {
+  if (!window.confirm('Deseja inativar este usuario?')) {
+    return;
+  }
+
+  await runSafely(async () => {
+    await api.deleteUser(Number(id));
+    await refreshAll();
+  }, 'Usuario inativado.');
+}
+
 async function applyFilters() {
   state.filters.query = byId('filter-query')?.value || '';
   state.filters.status = byId('filter-status')?.value || '';
@@ -1452,10 +1673,47 @@ async function saveSettings() {
     dailySummaryOnStartup: byId('setting-daily-summary').value === 'true'
   };
 
+  const online = {
+    siteUrl: byId('setting-site-url')?.value || '',
+    supabaseUrl: byId('setting-supabase-url')?.value || '',
+    supabaseAnonKey: byId('setting-supabase-anon-key')?.value || '',
+    syncEnabled: byId('setting-sync-enabled')?.value === 'true'
+  };
+
   await runSafely(async () => {
     await api.updateSettings('notifications', notifications);
+    await api.updateSettings('online', online);
     await refreshAll();
   }, 'Configuracoes salvas.');
+}
+
+function collectOnlineSettings() {
+  return {
+    siteUrl: byId('setting-site-url')?.value || state.settings.online?.siteUrl || '',
+    supabaseUrl: byId('setting-supabase-url')?.value || state.settings.online?.supabaseUrl || '',
+    supabaseAnonKey: byId('setting-supabase-anon-key')?.value || state.settings.online?.supabaseAnonKey || '',
+    syncEnabled: byId('setting-sync-enabled')?.value === 'true'
+  };
+}
+
+async function testOnlineSettings() {
+  const result = await runSafely(() => api.testOnline(collectOnlineSettings()));
+
+  if (result) {
+    const message = result.results.map((item) => `${item.kind}: ${item.message}`).join(' | ');
+    showToast(message || 'Informe o site ou Supabase para testar.', !result.ok);
+  }
+}
+
+async function openOnlineSite() {
+  const { siteUrl } = collectOnlineSettings();
+
+  if (!siteUrl) {
+    showToast('Informe o link do site online primeiro.', true);
+    return;
+  }
+
+  await runSafely(() => api.openUrl(siteUrl), 'Site aberto no navegador.');
 }
 
 async function activateProduct() {
@@ -1510,7 +1768,49 @@ async function scanNotifications() {
   }
 }
 
+function bindDialogCloseButtons() {
+  document.querySelectorAll('[data-dialog-close]').forEach((button) => {
+    button.addEventListener('click', () => {
+      byId(button.dataset.dialogClose)?.close();
+    });
+  });
+}
+
+function bindMoneyMasks() {
+  document.querySelectorAll('[data-money]').forEach((input) => {
+    if (input.dataset.moneyBound === 'true') {
+      return;
+    }
+
+    input.dataset.moneyBound = 'true';
+
+    input.addEventListener('input', () => {
+      input.value = input.value.replace(/[^\d,.]/g, '');
+
+      if (input.id === 'entry-amount-total') {
+        updateInstallmentPreview();
+      }
+    });
+
+    input.addEventListener('blur', () => {
+      if (!input.value.trim() && !input.required) {
+        input.value = '0,00';
+        return;
+      }
+
+      input.value = formatMoneyInput(input.value, input.required);
+
+      if (input.id === 'entry-amount-total') {
+        updateInstallmentPreview();
+      }
+    });
+  });
+}
+
 function bindGlobalEvents() {
+  bindDialogCloseButtons();
+  bindMoneyMasks();
+
   byId('module-menu').addEventListener('click', async (event) => {
     const button = event.target.closest('[data-view]');
 
@@ -1523,6 +1823,10 @@ function bindGlobalEvents() {
     button.addEventListener('click', () => {
       if (button.dataset.windowAction === 'minimize') {
         api.minimizeWindow();
+      }
+
+      if (button.dataset.windowAction === 'maximize') {
+        api.toggleMaximizeWindow?.();
       }
 
       if (button.dataset.windowAction === 'close') {
@@ -1548,6 +1852,7 @@ function bindGlobalEvents() {
   byId('settle-submit-button').addEventListener('click', saveSettlementForm);
   byId('cancel-submit-button').addEventListener('click', saveCancelForm);
   byId('catalog-submit-button').addEventListener('click', saveCatalogForm);
+  byId('user-submit-button').addEventListener('click', saveUserForm);
   byId('entry-plan-type').addEventListener('change', () => refreshPlanFields());
   byId('entry-amount-total').addEventListener('input', updateInstallmentPreview);
   byId('entry-installments').addEventListener('input', updateInstallmentPreview);
@@ -1572,10 +1877,15 @@ function bindGlobalEvents() {
       'catalog-new': () => openCatalogDialog(state.catalogKind),
       'catalog-edit': () => openCatalogDialog(state.catalogKind, state.catalogRows.find((row) => String(row.id) === String(id))),
       'catalog-delete': () => deleteCatalog(id),
+      'user-new': () => openUserDialog(),
+      'user-edit': () => openUserDialog(state.users.find((user) => String(user.id) === String(id))),
+      'user-delete': () => deleteUser(id),
       'create-backup': createBackup,
       'export-csv': exportCsv,
       'restore-backup': restoreBackup,
       'save-settings': saveSettings,
+      'test-online': testOnlineSettings,
+      'open-site': openOnlineSite,
       'refresh-health': refreshHealth,
       'clear-license': clearLicense
     };

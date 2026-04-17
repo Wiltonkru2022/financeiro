@@ -29,11 +29,23 @@ function addMonths(dateText, months) {
 }
 
 function toNumber(value, fallback = 0) {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : fallback;
+  }
+
   if (value === null || value === undefined || value === '') {
     return fallback;
   }
 
-  const parsed = Number(value);
+  const text = String(value).trim();
+
+  if (!text) {
+    return fallback;
+  }
+
+  const cleaned = text.replace(/\s/g, '').replace(/R\$/gi, '').replace(/[^\d,.-]/g, '');
+  const normalized = cleaned.includes(',') ? cleaned.replace(/\./g, '').replace(',', '.') : cleaned;
+  const parsed = Number(normalized);
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
@@ -267,7 +279,7 @@ function insertEntry(database, normalized) {
         cancelled_at,
         notes
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `
     )
     .run(

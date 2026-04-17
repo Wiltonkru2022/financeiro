@@ -17,7 +17,9 @@ const { getHealthSnapshot } = require('../services/healthService');
 const { activateLicense, clearLicense, getLicenseStatus, startTrial } = require('../services/licenseService');
 const { listLogs, writeLog } = require('../services/logService');
 const { runNotificationScan } = require('../services/notificationService');
+const { testOnlineConnection } = require('../services/onlineService');
 const { createBackup, exportEntriesCsv, getSettings, restoreBackup, updateSetting } = require('../services/systemService');
+const { createUser, deleteUser, listUsers, updateUser } = require('../services/userService');
 
 let mainWindow = null;
 
@@ -29,7 +31,7 @@ function createWindow() {
     minHeight: 720,
     frame: false,
     show: false,
-    backgroundColor: '#07101d',
+    backgroundColor: '#111b21',
     title: 'FinancePro',
     icon: path.join(__dirname, '..', '..', 'assets', 'icon.ico'),
     webPreferences: {
@@ -102,6 +104,7 @@ function registerIpcHandlers() {
         { id: 'catalog_parties', label: 'Clientes e Fornecedores', icon: 'people' },
         { id: 'catalog_categories', label: 'Categorias', icon: 'tag' },
         { id: 'catalog_cost_centers', label: 'Centro de Custo', icon: 'grid' },
+        { id: 'users', label: 'Usuarios', icon: 'users' },
         { id: 'reports', label: 'Relatorios', icon: 'chart' },
         { id: 'backup', label: 'Configuracoes', icon: 'gear' }
       ],
@@ -123,11 +126,13 @@ function registerIpcHandlers() {
   ipcMain.handle('entries:create', (_event, input) => {
     const result = createEntry(getDatabase(), input || {});
     writeLog(getDatabase(), { log_type: 'action', message: 'Lancamento criado.', entity_name: 'financial_entries' });
+    runNotificationScan(getDatabase(), { force: true });
     return result;
   });
   ipcMain.handle('entries:update', (_event, id, input) => {
     const result = updateEntry(getDatabase(), id, input || {});
     writeLog(getDatabase(), { log_type: 'action', message: 'Lancamento atualizado.', entity_name: 'financial_entries', entity_id: id });
+    runNotificationScan(getDatabase(), { force: true });
     return result;
   });
   ipcMain.handle('entries:delete', (_event, id, input) => {
@@ -138,6 +143,7 @@ function registerIpcHandlers() {
   ipcMain.handle('entries:settle', (_event, id, input) => {
     const result = settleEntry(getDatabase(), id, input || {});
     writeLog(getDatabase(), { log_type: 'action', message: 'Baixa financeira registrada.', entity_name: 'financial_entries', entity_id: id });
+    runNotificationScan(getDatabase(), { force: true });
     return result;
   });
 
@@ -146,8 +152,14 @@ function registerIpcHandlers() {
   ipcMain.handle('catalogs:update', (_event, kind, id, input) => updateCatalog(getDatabase(), kind, id, input || {}));
   ipcMain.handle('catalogs:delete', (_event, kind, id) => deleteCatalog(getDatabase(), kind, id));
 
+  ipcMain.handle('users:list', () => listUsers(getDatabase()));
+  ipcMain.handle('users:create', (_event, input) => createUser(getDatabase(), input || {}));
+  ipcMain.handle('users:update', (_event, id, input) => updateUser(getDatabase(), id, input || {}));
+  ipcMain.handle('users:delete', (_event, id) => deleteUser(getDatabase(), id));
+
   ipcMain.handle('settings:get', () => getSettings(getDatabase()));
   ipcMain.handle('settings:update', (_event, key, value) => updateSetting(getDatabase(), key, value));
+  ipcMain.handle('online:test', (_event, input) => testOnlineConnection(input || getSettings(getDatabase()).online || {}));
 
   ipcMain.handle('audit:list', (_event, limit) => getAuditLog(getDatabase(), limit || 100));
   ipcMain.handle('logs:list', (_event, filters) => listLogs(getDatabase(), filters || {}));
@@ -158,7 +170,21 @@ function registerIpcHandlers() {
   ipcMain.handle('license:activate', (_event, input) => activateLicense(getDatabase(), input || {}));
   ipcMain.handle('license:clear', () => clearLicense(getDatabase()));
   ipcMain.handle('window:minimize', () => mainWindow?.minimize());
+  ipcMain.handle('window:toggle-maximize', () => {
+    if (!mainWindow) {
+      return false;
+    }
+
+    if (mainWindow.isMaximized()) {
+      mainWindow.unmaximize();
+      return false;
+    }
+
+    mainWindow.maximize();
+    return true;
+  });
   ipcMain.handle('window:close', () => mainWindow?.close());
+  ipcMain.handle('system:open-url', (_event, url) => shell.openExternal(url));
 
   ipcMain.handle('notifications:scan', (_event, options) => runNotificationScan(getDatabase(), options || {}));
 

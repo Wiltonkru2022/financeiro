@@ -12,9 +12,12 @@
     "lint": "eslint",
     "desktop": "electron .",
     "license-api": "node license-api/server.js",
-    "dist": "electron-builder --win nsis --x64"
+    "dist": "electron-builder --win nsis --x64",
+    "dist:inno": "powershell -NoProfile -ExecutionPolicy Bypass -File installer/build-inno.ps1"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.10.2",
+    "@supabase/supabase-js": "^2.103.3",
     "next": "16.2.4",
     "react": "19.2.4",
     "react-dom": "19.2.4"

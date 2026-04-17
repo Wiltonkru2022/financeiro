@@ -49,7 +49,13 @@ function normalizeValue(field, value) {
   }
 
   if (field === 'current_balance') {
-    const parsed = Number(value || 0);
+    const cleaned = String(value || 0)
+      .trim()
+      .replace(/\s/g, '')
+      .replace(/R\$/gi, '')
+      .replace(/[^\d,.-]/g, '');
+    const normalized = cleaned.includes(',') ? cleaned.replace(/\./g, '').replace(',', '.') : cleaned;
+    const parsed = Number(normalized || 0);
     return Number.isFinite(parsed) ? Math.round(parsed * 100) / 100 : 0;
   }
 
@@ -172,4 +178,3 @@ module.exports = {
   listLookups,
   updateCatalog
 };
-

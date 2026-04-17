@@ -13,8 +13,13 @@ contextBridge.exposeInMainWorld('contaCertaApi', {
   createCatalog: (kind, payload) => ipcRenderer.invoke('catalogs:create', kind, payload),
   updateCatalog: (kind, id, payload) => ipcRenderer.invoke('catalogs:update', kind, id, payload),
   deleteCatalog: (kind, id) => ipcRenderer.invoke('catalogs:delete', kind, id),
+  listUsers: () => ipcRenderer.invoke('users:list'),
+  createUser: (payload) => ipcRenderer.invoke('users:create', payload),
+  updateUser: (id, payload) => ipcRenderer.invoke('users:update', id, payload),
+  deleteUser: (id) => ipcRenderer.invoke('users:delete', id),
   getSettings: () => ipcRenderer.invoke('settings:get'),
   updateSettings: (key, value) => ipcRenderer.invoke('settings:update', key, value),
+  testOnline: (payload) => ipcRenderer.invoke('online:test', payload),
   listAudit: (limit) => ipcRenderer.invoke('audit:list', limit),
   listLogs: (filters) => ipcRenderer.invoke('logs:list', filters),
   getHealth: () => ipcRenderer.invoke('health:get'),
@@ -27,7 +32,9 @@ contextBridge.exposeInMainWorld('contaCertaApi', {
   exportCsv: (filters) => ipcRenderer.invoke('system:export-csv', filters),
   restoreBackup: () => ipcRenderer.invoke('system:restore-backup'),
   minimizeWindow: () => ipcRenderer.invoke('window:minimize'),
+  toggleMaximizeWindow: () => ipcRenderer.invoke('window:toggle-maximize'),
   closeWindow: () => ipcRenderer.invoke('window:close'),
+  openUrl: (url) => ipcRenderer.invoke('system:open-url', url),
   onMenuCreateBackup: (callback) => ipcRenderer.on('menu:create-backup', callback),
   onMenuExportCsv: (callback) => ipcRenderer.on('menu:export-csv', callback)
 });
