@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self';"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ContaCerta Desktop</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <section class="activation-screen" id="activation-screen" hidden>
+      <div class="activation-window">
+        <header class="activation-header">
+          <div class="activation-brand">
+            <span class="brand-mark">CC</span>
+            <div>
+              <h1>ContaCerta Pro</h1>
+              <p>Sistema de Contas a Pagar e Receber</p>
+            </div>
+          </div>
+          <span class="activation-chip">Conexao segura</span>
+        </header>
+
+        <div class="activation-body">
+          <aside class="activation-art">
+            <div class="chart-bars">
+              <span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <strong>Financeiro premium offline</strong>
+            <p>Licenca por dispositivo, logs, backup e painel de saude.</p>
+          </aside>
+
+          <main class="activation-form">
+            <p class="eyebrow">Ativacao do produto</p>
+            <h2>Insira sua chave para liberar o sistema.</h2>
+            <p class="muted" id="activation-message">Digite a chave recebida na compra ou inicie uma avaliacao de 7 dias.</p>
+
+            <label>
+              Email do cliente
+              <input id="activation-email" type="email" placeholder="cliente@email.com" />
+            </label>
+
+            <label>
+              Chave do produto
+              <input id="activation-key" placeholder="Digite sua chave de produto..." />
+            </label>
+
+            <label>
+              API de licenca
+              <input id="activation-api-url" placeholder="https://sua-api.com" />
+            </label>
+
+            <button class="activation-primary" id="activate-button" type="button">Ativar</button>
+            <button class="activation-link" id="trial-button" type="button">Iniciar versao de avaliacao</button>
+
+            <footer>
+              <span>Licenca valida para este computador</span>
+              <span>Suporte: suporte@contacerta.com.br</span>
+            </footer>
+          </main>
+        </div>
+      </div>
+    </section>
+
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark">CC</span>
+          <div>
+            <h1>ContaCerta</h1>
+            <p>Financeiro offline</p>
+          </div>
+        </div>
+
+        <nav class="menu" id="module-menu"></nav>
+
+        <div class="sidebar-card">
+          <strong>Atalhos</strong>
+          <button id="quick-payable" type="button">Nova conta a pagar</button>
+          <button id="quick-receivable" type="button">Novo recebimento</button>
+          <button id="scan-button" type="button">Verificar alertas</button>
+        </div>
+      </aside>
+
+      <main class="content">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow" id="view-eyebrow">Sistema local</p>
+            <h2 id="view-title">Dashboard financeiro</h2>
+          </div>
+          <div class="topbar-actions">
+            <span class="db-pill license-pill" id="license-pill">Licenca</span>
+            <span class="db-pill" id="database-path">Banco local</span>
+            <button class="ghost" id="refresh-button" type="button">Atualizar</button>
+          </div>
+        </header>
+
+        <div class="toast" id="toast" hidden></div>
+        <section id="view-root"></section>
+      </main>
+    </div>
+
+    <dialog class="modal" id="entry-dialog">
+      <form method="dialog" id="entry-form" class="modal-card">
+        <header class="modal-header">
+          <div>
+            <p class="eyebrow">Lancamento</p>
+            <h3 id="entry-dialog-title">Novo lancamento</h3>
+          </div>
+          <button class="icon-button" value="cancel" type="submit">x</button>
+        </header>
+
+        <input type="hidden" id="entry-id" name="id" />
+
+        <div class="form-grid">
+          <label>
+            Tipo
+            <select id="entry-type" name="entry_type" required>
+              <option value="payable">Conta a pagar</option>
+              <option value="receivable">Conta a receber</option>
+            </select>
+          </label>
+
+          <label>
+            Modelo
+            <select id="entry-plan-type" name="plan_type" required>
+              <option value="single">Unica</option>
+              <option value="fixed">Fixa mensal</option>
+              <option value="installment">Parcelada</option>
+            </select>
+          </label>
+
+          <label>
+            Descricao
+            <input id="entry-description" name="description" required maxlength="160" />
+          </label>
+
+          <label>
+            Pessoa
+            <select id="entry-party" name="party_id"></select>
+          </label>
+
+          <label>
+            Categoria
+            <select id="entry-category" name="category_id"></select>
+          </label>
+
+          <label>
+            Centro de custo
+            <select id="entry-cost-center" name="cost_center_id"></select>
+          </label>
+
+          <label>
+            Conta
+            <select id="entry-account" name="account_id"></select>
+          </label>
+
+          <label>
+            Forma de pagamento
+            <select id="entry-payment-method" name="payment_method_id"></select>
+          </label>
+
+          <label>
+            Emissao
+            <input id="entry-issue-date" name="issue_date" type="date" />
+          </label>
+
+          <label>
+            Competencia
+            <input id="entry-competence-date" name="competence_date" type="date" />
+          </label>
+
+          <label>
+            Vencimento
+            <input id="entry-due-date" name="due_date" type="date" required />
+          </label>
+
+          <label>
+            Valor
+            <input id="entry-amount-total" name="amount_total" type="number" min="0.01" step="0.01" required />
+          </label>
+
+          <label>
+            Desconto
+            <input id="entry-discount" name="amount_discount" type="number" min="0" step="0.01" />
+          </label>
+
+          <label>
+            Juros
+            <input id="entry-interest" name="amount_interest" type="number" min="0" step="0.01" />
+          </label>
+
+          <label>
+            Multa
+            <input id="entry-penalty" name="amount_penalty" type="number" min="0" step="0.01" />
+          </label>
+
+          <label>
+            Status
+            <select id="entry-status" name="status">
+              <option value="open">Em aberto</option>
+              <option value="partial">Parcial</option>
+              <option value="settled">Liquidado</option>
+              <option value="draft">Rascunho</option>
+              <option value="cancelled" disabled>Cancelado</option>
+            </select>
+          </label>
+
+          <label class="installment-field">
+            Parcelas
+            <input id="entry-installments" name="installments" type="number" min="1" max="120" value="1" />
+            <small id="installment-preview">Ex.: 2590 em 12x = R$ 215,83</small>
+          </label>
+
+          <label class="installment-field">
+            Intervalo mensal
+            <input id="entry-installment-interval" name="installment_interval_months" type="number" min="1" max="24" value="1" />
+          </label>
+
+          <label class="fixed-field">
+            Gerar por quantos meses
+            <input id="entry-fixed-months" name="fixed_months" type="number" min="1" max="120" value="24" />
+            <small>Ideal para aluguel, luz, agua, planos e financiamentos fixos.</small>
+          </label>
+
+          <label class="span-3">
+            Observacoes
+            <textarea id="entry-notes" name="notes" rows="3"></textarea>
+          </label>
+        </div>
+
+        <footer class="modal-actions">
+          <button class="ghost" value="cancel" type="submit">Cancelar</button>
+          <button class="primary" id="entry-submit-button" type="button">Salvar lancamento</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <dialog class="modal" id="cancel-dialog">
+      <form method="dialog" id="cancel-form" class="modal-card compact danger-card">
+        <header class="modal-header">
+          <div>
+            <p class="eyebrow">Cancelamento</p>
+            <h3>Cancelar lancamento</h3>
+          </div>
+          <button class="icon-button" value="cancel" type="submit">x</button>
+        </header>
+
+        <input type="hidden" id="cancel-entry-id" name="id" />
+        <p class="muted" id="cancel-entry-info"></p>
+
+        <label>
+          Motivo do cancelamento
+          <textarea id="cancel-reason" name="cancellation_reason" rows="4" required placeholder="Ex.: compra desfeita, duplicidade, acordo cancelado..."></textarea>
+        </label>
+
+        <footer class="modal-actions">
+          <button class="ghost" value="cancel" type="submit">Voltar</button>
+          <button class="danger" id="cancel-submit-button" type="button">Confirmar cancelamento</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <dialog class="modal" id="settle-dialog">
+      <form method="dialog" id="settle-form" class="modal-card compact">
+        <header class="modal-header">
+          <div>
+            <p class="eyebrow">Baixa financeira</p>
+            <h3 id="settle-title">Registrar pagamento/recebimento</h3>
+          </div>
+          <button class="icon-button" value="cancel" type="submit">x</button>
+        </header>
+
+        <input type="hidden" id="settle-entry-id" name="id" />
+        <p class="muted" id="settle-entry-info"></p>
+
+        <div class="form-grid two">
+          <label>
+            Data
+            <input id="settle-date" name="settlement_date" type="date" required />
+          </label>
+
+          <label>
+            Valor baixado
+            <input id="settle-amount" name="amount" type="number" min="0.01" step="0.01" required />
+          </label>
+
+          <label>
+            Desconto
+            <input id="settle-discount" name="discount" type="number" min="0" step="0.01" />
+          </label>
+
+          <label>
+            Juros
+            <input id="settle-interest" name="interest" type="number" min="0" step="0.01" />
+          </label>
+
+          <label>
+            Multa
+            <input id="settle-penalty" name="penalty" type="number" min="0" step="0.01" />
+          </label>
+
+          <label class="span-2">
+            Observacoes
+            <textarea id="settle-notes" name="notes" rows="3"></textarea>
+          </label>
+        </div>
+
+        <footer class="modal-actions">
+          <button class="ghost" value="cancel" type="submit">Cancelar</button>
+          <button class="primary" id="settle-submit-button" type="button">Confirmar baixa</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <dialog class="modal" id="catalog-dialog">
+      <form method="dialog" id="catalog-form" class="modal-card compact">
+        <header class="modal-header">
+          <div>
+            <p class="eyebrow">Cadastro</p>
+            <h3 id="catalog-title">Novo cadastro</h3>
+          </div>
+          <button class="icon-button" value="cancel" type="submit">x</button>
+        </header>
+
+        <input type="hidden" id="catalog-kind" name="kind" />
+        <input type="hidden" id="catalog-id" name="id" />
+        <div class="form-grid two" id="catalog-fields"></div>
+
+        <footer class="modal-actions">
+          <button class="ghost" value="cancel" type="submit">Cancelar</button>
+          <button class="primary" id="catalog-submit-button" type="button">Salvar cadastro</button>
+        </footer>
+      </form>
+    </dialog>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

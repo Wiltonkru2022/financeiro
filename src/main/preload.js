@@ -1,0 +1,31 @@
+const { contextBridge, ipcRenderer } = require('electron');
+
+contextBridge.exposeInMainWorld('contaCertaApi', {
+  getBootstrap: () => ipcRenderer.invoke('app:get-bootstrap'),
+  getDashboard: () => ipcRenderer.invoke('dashboard:get-snapshot'),
+  listEntries: (filters) => ipcRenderer.invoke('entries:list', filters),
+  getEntry: (id) => ipcRenderer.invoke('entries:get', id),
+  createEntry: (payload) => ipcRenderer.invoke('entries:create', payload),
+  updateEntry: (id, payload) => ipcRenderer.invoke('entries:update', id, payload),
+  deleteEntry: (id, payload) => ipcRenderer.invoke('entries:delete', id, payload),
+  settleEntry: (id, payload) => ipcRenderer.invoke('entries:settle', id, payload),
+  listCatalog: (kind) => ipcRenderer.invoke('catalogs:list', kind),
+  createCatalog: (kind, payload) => ipcRenderer.invoke('catalogs:create', kind, payload),
+  updateCatalog: (kind, id, payload) => ipcRenderer.invoke('catalogs:update', kind, id, payload),
+  deleteCatalog: (kind, id) => ipcRenderer.invoke('catalogs:delete', kind, id),
+  getSettings: () => ipcRenderer.invoke('settings:get'),
+  updateSettings: (key, value) => ipcRenderer.invoke('settings:update', key, value),
+  listAudit: (limit) => ipcRenderer.invoke('audit:list', limit),
+  listLogs: (filters) => ipcRenderer.invoke('logs:list', filters),
+  getHealth: () => ipcRenderer.invoke('health:get'),
+  getLicenseStatus: () => ipcRenderer.invoke('license:get-status'),
+  startTrial: () => ipcRenderer.invoke('license:start-trial'),
+  activateLicense: (payload) => ipcRenderer.invoke('license:activate', payload),
+  clearLicense: () => ipcRenderer.invoke('license:clear'),
+  runNotificationScan: (options) => ipcRenderer.invoke('notifications:scan', options),
+  createBackup: () => ipcRenderer.invoke('system:create-backup'),
+  exportCsv: (filters) => ipcRenderer.invoke('system:export-csv', filters),
+  restoreBackup: () => ipcRenderer.invoke('system:restore-backup'),
+  onMenuCreateBackup: (callback) => ipcRenderer.on('menu:create-backup', callback),
+  onMenuExportCsv: (callback) => ipcRenderer.on('menu:export-csv', callback)
+});
