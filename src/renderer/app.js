@@ -1215,6 +1215,7 @@ function renderAudit() {
 
 function renderBackup() {
   const notifications = state.settings.notifications;
+  const license = state.settings.license || {};
   const online = state.settings.online || {};
   const root = byId('view-root');
 
@@ -1273,6 +1274,10 @@ function renderBackup() {
         <span class="muted">Site, download e Supabase</span>
       </div>
       <div class="form-grid two">
+        <label class="span-2">
+          API de ativacao
+          <input id="setting-license-api-url" value="${escapeHtml(license.apiUrl || '')}" placeholder="https://.../functions/v1/licenses" />
+        </label>
         <label>
           Site online
           <input id="setting-site-url" value="${escapeHtml(online.siteUrl || '')}" placeholder="https://seudominio.com.br/financeiro" />
@@ -1673,6 +1678,11 @@ async function saveSettings() {
     dailySummaryOnStartup: byId('setting-daily-summary').value === 'true'
   };
 
+  const license = {
+    ...(state.settings.license || {}),
+    apiUrl: byId('setting-license-api-url')?.value || ''
+  };
+
   const online = {
     siteUrl: byId('setting-site-url')?.value || '',
     supabaseUrl: byId('setting-supabase-url')?.value || '',
@@ -1682,6 +1692,7 @@ async function saveSettings() {
 
   await runSafely(async () => {
     await api.updateSettings('notifications', notifications);
+    await api.updateSettings('license', license);
     await api.updateSettings('online', online);
     await refreshAll();
   }, 'Configuracoes salvas.');
@@ -1689,6 +1700,7 @@ async function saveSettings() {
 
 function collectOnlineSettings() {
   return {
+    licenseApiUrl: byId('setting-license-api-url')?.value || state.settings.license?.apiUrl || '',
     siteUrl: byId('setting-site-url')?.value || state.settings.online?.siteUrl || '',
     supabaseUrl: byId('setting-supabase-url')?.value || state.settings.online?.supabaseUrl || '',
     supabaseAnonKey: byId('setting-supabase-anon-key')?.value || state.settings.online?.supabaseAnonKey || '',

@@ -161,9 +161,12 @@ create table if not exists public.license_keys (
   product_key text not null unique,
   customer_email text not null,
   customer_name text,
+  document_number text,
   plan_name text not null default 'Plano Profissional',
   status text not null default 'active' check (status in ('active', 'trial', 'blocked', 'expired')),
   device_limit integer not null default 1,
+  max_users integer not null default 1,
+  modules_json jsonb not null default '["finance", "reports", "backup", "health"]'::jsonb,
   expires_at timestamptz,
   notes text,
   created_at timestamptz not null default now(),
@@ -174,12 +177,14 @@ create table if not exists public.license_activations (
   id uuid primary key default gen_random_uuid(),
   license_key_id uuid not null references public.license_keys(id) on delete cascade,
   device_fingerprint text not null,
+  activation_token text unique,
   machine_name text,
   app_version text,
   ip_address inet,
   status text not null default 'active' check (status in ('active', 'revoked')),
   activated_at timestamptz not null default now(),
   last_seen_at timestamptz not null default now(),
+  revoked_at timestamptz,
   unique (license_key_id, device_fingerprint)
 );
 
@@ -230,6 +235,8 @@ alter table public.financial_entries enable row level security;
 alter table public.settlements enable row level security;
 alter table public.recurring_templates enable row level security;
 alter table public.reminders enable row level security;
+alter table public.license_keys enable row level security;
+alter table public.license_activations enable row level security;
 alter table public.audit_log enable row level security;
 alter table public.app_logs enable row level security;
 
@@ -244,6 +251,8 @@ drop policy if exists "owner_all_financial_entries" on public.financial_entries;
 drop policy if exists "owner_all_settlements" on public.settlements;
 drop policy if exists "owner_all_recurring_templates" on public.recurring_templates;
 drop policy if exists "owner_all_reminders" on public.reminders;
+drop policy if exists "no_public_license_keys" on public.license_keys;
+drop policy if exists "no_public_license_activations" on public.license_activations;
 drop policy if exists "owner_all_audit_log" on public.audit_log;
 drop policy if exists "owner_all_app_logs" on public.app_logs;
 
@@ -259,5 +268,7 @@ create policy "owner_all_financial_entries" on public.financial_entries for all 
 create policy "owner_all_settlements" on public.settlements for all using (owner_id = auth.uid()) with check (owner_id = auth.uid());
 create policy "owner_all_recurring_templates" on public.recurring_templates for all using (owner_id = auth.uid()) with check (owner_id = auth.uid());
 create policy "owner_all_reminders" on public.reminders for all using (owner_id = auth.uid()) with check (owner_id = auth.uid());
+create policy "no_public_license_keys" on public.license_keys as restrictive for all using (false) with check (false);
+create policy "no_public_license_activations" on public.license_activations as restrictive for all using (false) with check (false);
 create policy "owner_all_audit_log" on public.audit_log for all using (owner_id = auth.uid()) with check (owner_id = auth.uid());
 create policy "owner_all_app_logs" on public.app_logs for all using (owner_id = auth.uid()) with check (owner_id = auth.uid());

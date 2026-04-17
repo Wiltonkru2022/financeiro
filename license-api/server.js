@@ -4,9 +4,13 @@ const http = require('http');
 const os = require('os');
 const path = require('path');
 const { DatabaseSync } = require('node:sqlite');
+const { createSupabaseLicenseStore } = require('./supabaseStore');
 
 const PORT = Number(process.env.LICENSE_API_PORT || 3877);
 const SECRET = process.env.LICENSE_SECRET || 'troque-este-segredo-em-producao';
+const ADMIN_TOKEN = process.env.LICENSE_ADMIN_TOKEN || '';
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const DATA_DIR =
   process.env.LICENSE_DATA_DIR ||
   path.join(process.env.LOCALAPPDATA || os.tmpdir(), 'FinanceProLicenseApi');
@@ -14,6 +18,12 @@ fs.mkdirSync(DATA_DIR, { recursive: true });
 const DB_PATH = process.env.LICENSE_DB_PATH || path.join(DATA_DIR, 'licenses.db');
 
 const db = new DatabaseSync(DB_PATH);
+const supabaseStore = createSupabaseLicenseStore({
+  supabaseUrl: SUPABASE_URL,
+  serviceRoleKey: SUPABASE_SERVICE_ROLE_KEY,
+  licenseSecret: SECRET
+});
+
 db.exec(`
   PRAGMA journal_mode = DELETE;
   CREATE TABLE IF NOT EXISTS licenses (
@@ -75,6 +85,24 @@ function readBody(req) {
   });
 }
 
+function assertAdminRequest(req) {
+  if (!ADMIN_TOKEN) {
+    const error = new Error('Token admin nao configurado.');
+    error.statusCode = 500;
+    throw error;
+  }
+
+  const authorization = req.headers.authorization || '';
+  const headerToken = req.headers['x-admin-token'] || '';
+  const bearerToken = authorization.toLowerCase().startsWith('bearer ') ? authorization.slice(7).trim() : '';
+
+  if (headerToken !== ADMIN_TOKEN && bearerToken !== ADMIN_TOKEN) {
+    const error = new Error('Nao autorizado.');
+    error.statusCode = 401;
+    throw error;
+  }
+}
+
 function sign(value) {
   return crypto.createHmac('sha256', SECRET).update(value).digest('base64url');
 }
@@ -125,7 +153,13 @@ function publicLicense(row, activationToken) {
 }
 
 async function handleCreateLicense(req, res) {
+  assertAdminRequest(req);
   const input = await readBody(req);
+
+  if (supabaseStore.enabled) {
+    return jsonResponse(res, 201, await supabaseStore.createLicense(input));
+  }
+
   const required = ['customerName', 'email', 'validUntil'];
 
   for (const field of required) {
@@ -179,6 +213,18 @@ async function handleCreateLicense(req, res) {
 
 async function handleActivate(req, res) {
   const input = await readBody(req);
+  const forwardedFor = req.headers['x-forwarded-for'] || '';
+
+  if (supabaseStore.enabled) {
+    return jsonResponse(
+      res,
+      200,
+      await supabaseStore.activateLicense({
+        ...input,
+        ipAddress: String(forwardedFor).split(',')[0]?.trim() || null
+      })
+    );
+  }
 
   if (!verifyProductKey(input.productKey)) {
     return jsonResponse(res, 401, { valid: false, message: 'Chave invalida.' });
@@ -224,6 +270,11 @@ async function handleActivate(req, res) {
 
 async function handleValidate(req, res) {
   const input = await readBody(req);
+
+  if (supabaseStore.enabled) {
+    return jsonResponse(res, 200, await supabaseStore.validateLicense(input));
+  }
+
   const activation = db
     .prepare(
       `
@@ -254,9 +305,13 @@ async function router(req, res) {
     }
 
     if (req.method === 'GET' && req.url === '/api/health') {
+      if (supabaseStore.enabled) {
+        await supabaseStore.health();
+      }
+
       return jsonResponse(res, 200, {
         status: 'ok',
-        database: 'ok',
+        database: supabaseStore.enabled ? 'supabase' : 'sqlite',
         service: 'financepro-license-api',
         checkedAt: new Date().toISOString()
       });
@@ -276,10 +331,12 @@ async function router(req, res) {
 
     return jsonResponse(res, 404, { message: 'Rota nao encontrada.' });
   } catch (error) {
-    return jsonResponse(res, 500, { valid: false, message: error.message });
+    return jsonResponse(res, error.statusCode || 500, { valid: false, message: error.message });
   }
 }
 
 http.createServer(router).listen(PORT, () => {
-  console.log(`FinancePro License API rodando em http://localhost:${PORT}`);
+  console.log(
+    `FinancePro License API rodando em http://localhost:${PORT} (${supabaseStore.enabled ? 'Supabase' : 'SQLite local'})`
+  );
 });

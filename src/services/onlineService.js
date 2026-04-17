@@ -46,6 +46,14 @@ async function ping(url, options = {}) {
 async function testOnlineConnection(settings = {}) {
   const results = [];
 
+  if (settings.licenseApiUrl) {
+    const apiUrl = normalizeUrl(settings.licenseApiUrl).replace(/\/$/, '');
+    results.push({
+      kind: 'api',
+      ...(await ping(`${apiUrl}/api/health`))
+    });
+  }
+
   if (settings.siteUrl) {
     results.push({
       kind: 'site',
@@ -57,7 +65,7 @@ async function testOnlineConnection(settings = {}) {
     const baseUrl = normalizeUrl(settings.supabaseUrl).replace(/\/$/, '');
     results.push({
       kind: 'supabase',
-      ...(await ping(`${baseUrl}/rest/v1/`, {
+      ...(await ping(`${baseUrl}/auth/v1/health`, {
         headers: {
           apikey: settings.supabaseAnonKey || '',
           Authorization: settings.supabaseAnonKey ? `Bearer ${settings.supabaseAnonKey}` : ''

@@ -46,15 +46,15 @@ function getSettings(database) {
       dailySummaryOnStartup: true
     }),
     license: getSetting(database, 'license', {
-      apiUrl: '',
+      apiUrl: 'https://sfinvquyuspingeqjamz.supabase.co/functions/v1/licenses',
       revalidateEveryDays: 7,
       offlineGraceDays: 14,
       requireActivation: true
     }),
     online: getSetting(database, 'online', {
-      siteUrl: 'https://wiltonkru2022.github.io/financeiro',
-      supabaseUrl: '',
-      supabaseAnonKey: '',
+      siteUrl: 'https://github.com/Wiltonkru2022/financeiro/releases/latest',
+      supabaseUrl: 'https://sfinvquyuspingeqjamz.supabase.co',
+      supabaseAnonKey: 'sb_publishable_R5z0B2_UHE0UrJ3TdTmAGg_3iaaeC0z',
       syncEnabled: false
     })
   };

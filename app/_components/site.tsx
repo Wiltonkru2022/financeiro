@@ -10,7 +10,8 @@ export const planFrequency = "por mês";
 export const supportEmail = "suporte@financepro.com.br";
 export const purchaseHref = `mailto:${supportEmail}?subject=Comprar%20FinancePro`;
 export const downloadHref =
-  process.env.NEXT_PUBLIC_DOWNLOAD_URL || "/downloads/FinancePro-Setup-1.0.0.exe";
+  process.env.NEXT_PUBLIC_DOWNLOAD_URL ||
+  "https://github.com/Wiltonkru2022/financeiro/releases/download/v1.0.0/FinancePro-Setup-1.0.0.exe";
 
 export const planItems = [
   "Contas a pagar",

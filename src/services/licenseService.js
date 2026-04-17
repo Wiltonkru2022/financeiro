@@ -7,7 +7,8 @@ const { getSetting, updateSetting } = require('./systemService');
 const { writeLog } = require('./logService');
 
 const LICENSE_FILE = 'license.secure';
-const DEFAULT_LICENSE_API_URL = process.env.FINANCEPRO_LICENSE_API_URL || 'http://localhost:3877';
+const DEFAULT_LICENSE_API_URL =
+  process.env.FINANCEPRO_LICENSE_API_URL || 'https://sfinvquyuspingeqjamz.supabase.co/functions/v1/licenses';
 const LICENSE_SECRET = process.env.FINANCEPRO_LICENSE_SECRET || process.env.LICENSE_SECRET || 'troque-este-segredo-em-producao';
 
 function nowIso() {
