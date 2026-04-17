@@ -7,7 +7,7 @@
       content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self';"
     />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ContaCerta Desktop</title>
+    <title>FinancePro</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
@@ -15,13 +15,16 @@
       <div class="activation-window">
         <header class="activation-header">
           <div class="activation-brand">
-            <span class="brand-mark">CC</span>
+            <span class="finance-logo" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
             <div>
-              <h1>ContaCerta Pro</h1>
+              <h1>FinancePro</h1>
               <p>Sistema de Contas a Pagar e Receber</p>
             </div>
           </div>
-          <span class="activation-chip">Conexao segura</span>
+          <div class="window-controls">
+            <button data-window-action="minimize" type="button" aria-label="Minimizar">-</button>
+            <button data-window-action="close" type="button" aria-label="Fechar">x</button>
+          </div>
         </header>
 
         <div class="activation-body">
@@ -29,37 +32,27 @@
             <div class="chart-bars">
               <span></span><span></span><span></span><span></span><span></span>
             </div>
-            <strong>Financeiro premium offline</strong>
-            <p>Licenca por dispositivo, logs, backup e painel de saude.</p>
           </aside>
 
           <main class="activation-form">
-            <p class="eyebrow">Ativacao do produto</p>
-            <h2>Insira sua chave para liberar o sistema.</h2>
-            <p class="muted" id="activation-message">Digite a chave recebida na compra ou inicie uma avaliacao de 7 dias.</p>
+            <h2>Ativacao do Produto</h2>
+            <p class="muted" id="activation-message">Insira sua chave de licenca para ativar o sistema.</p>
 
-            <label>
-              Email do cliente
-              <input id="activation-email" type="email" placeholder="cliente@email.com" />
-            </label>
-
-            <label>
-              Chave do produto
+            <div class="license-input-wrap">
               <input id="activation-key" placeholder="Digite sua chave de produto..." />
-            </label>
-
-            <label>
-              API de licenca
-              <input id="activation-api-url" placeholder="https://sua-api.com" />
-            </label>
+              <span class="key-icon" aria-hidden="true"></span>
+            </div>
+            <input id="activation-email" type="email" hidden />
+            <input id="activation-api-url" hidden />
 
             <button class="activation-primary" id="activate-button" type="button">Ativar</button>
             <button class="activation-link" id="trial-button" type="button">Iniciar versao de avaliacao</button>
 
             <footer>
-              <span>Licenca valida para este computador</span>
-              <span>Suporte: suporte@contacerta.com.br</span>
+              <strong>Precisa de ajuda?</strong>
+              <span>Suporte: suporte@financepro.com.br</span>
             </footer>
+            <p class="secure-line">Licenca valida para um dispositivo • Conexao segura</p>
           </main>
         </div>
       </div>
@@ -68,36 +61,51 @@
     <div class="shell">
       <aside class="sidebar">
         <div class="brand">
-          <span class="brand-mark">CC</span>
+          <span class="finance-logo small" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
           <div>
-            <h1>ContaCerta</h1>
-            <p>Financeiro offline</p>
+            <h1>FinancePro</h1>
+            <p>Controle financeiro</p>
           </div>
         </div>
 
         <nav class="menu" id="module-menu"></nav>
 
-        <div class="sidebar-card">
-          <strong>Atalhos</strong>
-          <button id="quick-payable" type="button">Nova conta a pagar</button>
-          <button id="quick-receivable" type="button">Novo recebimento</button>
-          <button id="scan-button" type="button">Verificar alertas</button>
+        <div class="sidebar-user">
+          <span class="user-avatar">A</span>
+          <div>
+            <strong>Admin</strong>
+            <small>Administrador</small>
+          </div>
         </div>
       </aside>
 
       <main class="content">
         <header class="topbar">
+          <button class="hamburger" type="button" aria-label="Menu"><span></span><span></span><span></span></button>
           <div>
             <p class="eyebrow" id="view-eyebrow">Sistema local</p>
             <h2 id="view-title">Dashboard financeiro</h2>
           </div>
           <div class="topbar-actions">
+            <label class="search-box">
+              <span aria-hidden="true"></span>
+              <input id="global-search" placeholder="Buscar por nome" />
+            </label>
             <span class="db-pill license-pill" id="license-pill">Licenca</span>
-            <span class="db-pill" id="database-path">Banco local</span>
+            <button class="icon-top notify" id="scan-button" type="button" aria-label="Alertas"></button>
             <button class="ghost" id="refresh-button" type="button">Atualizar</button>
+            <div class="admin-chip">
+              <span class="user-avatar small">A</span>
+              <span>Admin</span>
+            </div>
+            <div class="window-controls shell-controls">
+              <button data-window-action="minimize" type="button" aria-label="Minimizar">-</button>
+              <button data-window-action="close" type="button" aria-label="Fechar">x</button>
+            </div>
           </div>
         </header>
 
+        <span class="db-pill hidden-db" id="database-path">Banco local</span>
         <div class="toast" id="toast" hidden></div>
         <section id="view-root"></section>
       </main>

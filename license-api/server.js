@@ -9,7 +9,7 @@ const PORT = Number(process.env.LICENSE_API_PORT || 3877);
 const SECRET = process.env.LICENSE_SECRET || 'troque-este-segredo-em-producao';
 const DATA_DIR =
   process.env.LICENSE_DATA_DIR ||
-  path.join(process.env.LOCALAPPDATA || os.tmpdir(), 'ContaCertaLicenseApi');
+  path.join(process.env.LOCALAPPDATA || os.tmpdir(), 'FinanceProLicenseApi');
 fs.mkdirSync(DATA_DIR, { recursive: true });
 const DB_PATH = process.env.LICENSE_DB_PATH || path.join(DATA_DIR, 'licenses.db');
 
@@ -113,6 +113,7 @@ function publicLicense(row, activationToken) {
     status: row.status,
     activationToken,
     customerName: row.customer_name,
+    customerEmail: row.email,
     documentNumber: row.document_number,
     plan: row.plan,
     expiresAt: row.valid_until,
@@ -136,6 +137,11 @@ async function handleCreateLicense(req, res) {
   const keyPayload = {
     email: input.email,
     customerName: input.customerName,
+    plan: input.plan || 'profissional',
+    validUntil: input.validUntil,
+    maxDevices: Number(input.maxDevices || 1),
+    maxUsers: Number(input.maxUsers || 1),
+    modules: input.modules || ['finance', 'reports', 'backup', 'health'],
     createdAt: new Date().toISOString(),
     nonce: crypto.randomBytes(12).toString('hex')
   };
@@ -161,7 +167,7 @@ async function handleCreateLicense(req, res) {
     input.customerName,
     input.documentNumber || '',
     input.email,
-    input.plan || 'standard',
+    input.plan || 'profissional',
     input.validUntil,
     Number(input.maxDevices || 1),
     Number(input.maxUsers || 1),
@@ -188,7 +194,9 @@ async function handleActivate(req, res) {
     return jsonResponse(res, 403, { valid: false, message: 'Licenca expirada.' });
   }
 
-  if (String(license.email).toLowerCase() !== String(input.email || '').toLowerCase()) {
+  const activationEmail = String(input.email || license.email || '').toLowerCase();
+
+  if (String(license.email).toLowerCase() !== activationEmail) {
     return jsonResponse(res, 403, { valid: false, message: 'Email nao corresponde a licenca.' });
   }
 
@@ -249,7 +257,7 @@ async function router(req, res) {
       return jsonResponse(res, 200, {
         status: 'ok',
         database: 'ok',
-        service: 'contacerta-license-api',
+        service: 'financepro-license-api',
         checkedAt: new Date().toISOString()
       });
     }
@@ -273,5 +281,5 @@ async function router(req, res) {
 }
 
 http.createServer(router).listen(PORT, () => {
-  console.log(`ContaCerta License API rodando em http://localhost:${PORT}`);
+  console.log(`FinancePro License API rodando em http://localhost:${PORT}`);
 });

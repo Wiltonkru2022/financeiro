@@ -7,6 +7,8 @@ const { getSetting, updateSetting } = require('./systemService');
 const { writeLog } = require('./logService');
 
 const LICENSE_FILE = 'license.secure';
+const DEFAULT_LICENSE_API_URL = process.env.FINANCEPRO_LICENSE_API_URL || 'http://localhost:3877';
+const LICENSE_SECRET = process.env.FINANCEPRO_LICENSE_SECRET || process.env.LICENSE_SECRET || 'troque-este-segredo-em-producao';
 
 function nowIso() {
   return new Date().toISOString();
@@ -16,6 +18,64 @@ function addDays(days) {
   const date = new Date();
   date.setDate(date.getDate() + days);
   return date.toISOString();
+}
+
+function signLicenseBody(body) {
+  return crypto.createHmac('sha256', LICENSE_SECRET).update(body).digest('base64url');
+}
+
+function verifyOfflineProductKey(productKey) {
+  if (!productKey?.startsWith('CC-')) {
+    return null;
+  }
+
+  const raw = productKey.slice(3);
+  const [body, signature] = raw.split('.');
+  const expected = signLicenseBody(body || '');
+
+  if (
+    !body ||
+    !signature ||
+    Buffer.byteLength(signature) !== Buffer.byteLength(expected) ||
+    !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
+  ) {
+    return null;
+  }
+
+  return JSON.parse(Buffer.from(body, 'base64url').toString('utf8'));
+}
+
+function offlineActivationPayload(productKey, email) {
+  const payload = verifyOfflineProductKey(productKey);
+
+  if (!payload) {
+    throw new Error('Chave invalida.');
+  }
+
+  if (email && String(payload.email || '').toLowerCase() !== String(email).toLowerCase()) {
+    throw new Error('Email nao corresponde a licenca.');
+  }
+
+  const expiresAt = payload.validUntil || addDays(365);
+
+  if (new Date(expiresAt).getTime() < Date.now()) {
+    throw new Error('Licenca expirada.');
+  }
+
+  return {
+    valid: true,
+    status: 'active',
+    activationToken: crypto.createHash('sha256').update(`${productKey}:${getDeviceId()}`).digest('hex'),
+    customerName: payload.customerName || payload.email || 'Cliente FinancePro',
+    customerEmail: payload.email || email,
+    documentNumber: payload.documentNumber || '',
+    plan: payload.plan || 'profissional',
+    expiresAt,
+    maxDevices: payload.maxDevices || 1,
+    maxUsers: payload.maxUsers || 1,
+    modules: payload.modules || ['finance', 'reports', 'backup', 'health'],
+    activatedAt: nowIso()
+  };
 }
 
 function getLicensePath() {
@@ -181,44 +241,46 @@ function startTrial(database) {
 
 async function activateLicense(database, input) {
   const settings = getSetting(database, 'license', {});
-  const apiUrl = String(input.apiUrl || settings.apiUrl || '').trim().replace(/\/$/, '');
+  const apiUrl = String(input.apiUrl || settings.apiUrl || DEFAULT_LICENSE_API_URL).trim().replace(/\/$/, '');
   const productKey = String(input.productKey || '').trim();
   const email = String(input.email || '').trim();
-
-  if (!apiUrl) {
-    throw new Error('Configure a URL da API de licencas para ativar online.');
-  }
 
   if (!productKey) {
     throw new Error('Digite a chave do produto.');
   }
 
-  if (!email) {
-    throw new Error('Digite o email do cliente.');
-  }
+  let payload;
 
-  const response = await fetch(`${apiUrl}/api/licenses/activate`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      productKey,
-      email,
-      deviceId: getDeviceId(),
-      appVersion: app.getVersion()
-    })
-  });
+  try {
+    const response = await fetch(`${apiUrl}/api/licenses/activate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        productKey,
+        email: email || undefined,
+        deviceId: getDeviceId(),
+        appVersion: app.getVersion()
+      })
+    });
 
-  const payload = await response.json().catch(() => ({}));
+    payload = await response.json().catch(() => ({}));
 
-  if (!response.ok || payload.valid === false) {
-    throw new Error(payload.message || 'Licenca invalida, expirada ou ja usada em outro computador.');
+    if (!response.ok || payload.valid === false) {
+      throw new Error(payload.message || 'Licenca invalida, expirada ou ja usada em outro computador.');
+    }
+  } catch (error) {
+    if (error.message && !/fetch|failed|ECONNREFUSED|ENOTFOUND|network/i.test(error.message)) {
+      throw error;
+    }
+
+    payload = offlineActivationPayload(productKey, email);
   }
 
   const record = {
     mode: 'licensed',
     status: payload.status || 'active',
     customerName: payload.customerName || email,
-    customerEmail: email,
+    customerEmail: payload.customerEmail || email,
     documentNumber: payload.documentNumber || '',
     plan: payload.plan || 'standard',
     modules: payload.modules || ['finance', 'reports', 'backup', 'health'],

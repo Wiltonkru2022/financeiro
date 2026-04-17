@@ -216,7 +216,7 @@ function seedDefaults(database) {
     insertSettingIfMissing.run(
       'license',
       JSON.stringify({
-        apiUrl: '',
+        apiUrl: 'http://localhost:3877',
         revalidateEveryDays: 7,
         offlineGraceDays: 14,
         requireActivation: true

@@ -58,7 +58,7 @@ function createBackup(database, targetPath) {
   checkpointDatabase();
   const backupPath =
     targetPath ||
-    path.join(getBackupDirectory(), `contacerta-backup-${new Date().toISOString().replace(/[:.]/g, '-')}.db`);
+    path.join(getBackupDirectory(), `financepro-backup-${new Date().toISOString().replace(/[:.]/g, '-')}.db`);
 
   fs.copyFileSync(getDatabasePath(), backupPath);
 

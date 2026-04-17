@@ -23,12 +23,15 @@ let mainWindow = null;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1500,
-    height: 940,
-    minWidth: 1180,
-    minHeight: 760,
-    backgroundColor: '#ece7da',
-    title: 'ContaCerta Desktop',
+    width: 1360,
+    height: 860,
+    minWidth: 1120,
+    minHeight: 720,
+    frame: false,
+    show: false,
+    backgroundColor: '#07101d',
+    title: 'FinancePro',
+    icon: path.join(__dirname, '..', '..', 'assets', 'icon.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -37,6 +40,7 @@ function createWindow() {
   });
 
   mainWindow.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
+  mainWindow.once('ready-to-show', () => mainWindow?.show());
 }
 
 function createMenu() {
@@ -67,7 +71,7 @@ function createMenu() {
     }
   ];
 
-  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+  Menu.setApplicationMenu(null);
 }
 
 function saveDialog(defaultPath, filters) {
@@ -88,18 +92,18 @@ function registerIpcHandlers() {
   ipcMain.handle('app:get-bootstrap', () => {
     const db = getDatabase();
     return {
-      appName: 'ContaCerta Desktop',
+      appName: 'FinancePro',
       databasePath: getDatabasePath(),
       version: app.getVersion(),
       modules: [
-        { id: 'dashboard', label: 'Dashboard' },
-        { id: 'payable', label: 'Contas a pagar' },
-        { id: 'receivable', label: 'Contas a receber' },
-        { id: 'entries', label: 'Lancamentos' },
-      { id: 'catalogs', label: 'Cadastros' },
-      { id: 'reports', label: 'Relatorios' },
-      { id: 'health', label: 'AdminMaster' },
-      { id: 'backup', label: 'Backup e ajustes' }
+        { id: 'dashboard', label: 'Painel', icon: 'home' },
+        { id: 'receivable', label: 'Contas a Receber', icon: 'in' },
+        { id: 'payable', label: 'Contas a Pagar', icon: 'out' },
+        { id: 'catalog_parties', label: 'Clientes e Fornecedores', icon: 'people' },
+        { id: 'catalog_categories', label: 'Categorias', icon: 'tag' },
+        { id: 'catalog_cost_centers', label: 'Centro de Custo', icon: 'grid' },
+        { id: 'reports', label: 'Relatorios', icon: 'chart' },
+        { id: 'backup', label: 'Configuracoes', icon: 'gear' }
       ],
       lookups: listLookups(db),
       settings: getSettings(db),
@@ -153,12 +157,14 @@ function registerIpcHandlers() {
   ipcMain.handle('license:start-trial', () => startTrial(getDatabase()));
   ipcMain.handle('license:activate', (_event, input) => activateLicense(getDatabase(), input || {}));
   ipcMain.handle('license:clear', () => clearLicense(getDatabase()));
+  ipcMain.handle('window:minimize', () => mainWindow?.minimize());
+  ipcMain.handle('window:close', () => mainWindow?.close());
 
   ipcMain.handle('notifications:scan', (_event, options) => runNotificationScan(getDatabase(), options || {}));
 
   ipcMain.handle('system:create-backup', async () => {
-    const result = await saveDialog(`contacerta-backup-${new Date().toISOString().slice(0, 10)}.db`, [
-      { name: 'Banco ContaCerta', extensions: ['db'] }
+    const result = await saveDialog(`financepro-backup-${new Date().toISOString().slice(0, 10)}.db`, [
+      { name: 'Banco FinancePro', extensions: ['db'] }
     ]);
 
     if (result.canceled || !result.filePath) {
@@ -169,7 +175,7 @@ function registerIpcHandlers() {
   });
 
   ipcMain.handle('system:export-csv', async (_event, filters) => {
-    const result = await saveDialog(`contacerta-lancamentos-${new Date().toISOString().slice(0, 10)}.csv`, [
+    const result = await saveDialog(`financepro-lancamentos-${new Date().toISOString().slice(0, 10)}.csv`, [
       { name: 'CSV', extensions: ['csv'] }
     ]);
 
@@ -181,7 +187,7 @@ function registerIpcHandlers() {
   });
 
   ipcMain.handle('system:restore-backup', async () => {
-    const result = await openDialog([{ name: 'Banco ContaCerta', extensions: ['db'] }]);
+    const result = await openDialog([{ name: 'Banco FinancePro', extensions: ['db'] }]);
 
     if (result.canceled || !result.filePaths?.[0]) {
       return { canceled: true };

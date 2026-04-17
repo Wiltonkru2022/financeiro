@@ -40,7 +40,7 @@ function runNotificationScan(database, options = {}) {
 
   if (messages.length > 0 && shouldShow && Notification.isSupported()) {
     const notification = new Notification({
-      title: 'ContaCerta Desktop',
+      title: 'FinancePro',
       body: messages.join(' | ')
     });
 
@@ -58,4 +58,3 @@ module.exports = {
   getAlertMessages,
   runNotificationScan
 };
-

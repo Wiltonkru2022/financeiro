@@ -22,14 +22,17 @@ const state = {
 };
 
 const viewMeta = {
-  dashboard: ['Sistema local', 'Dashboard financeiro'],
-  payable: ['Contas a pagar', 'Despesas, boletos e compromissos'],
-  receivable: ['Contas a receber', 'Recebimentos, clientes e inadimplencia'],
+  dashboard: ['Home', 'Painel'],
+  payable: ['Financeiro', 'Contas a Pagar'],
+  receivable: ['Financeiro', 'Contas a Receber'],
   entries: ['Lancamentos', 'Todos os titulos financeiros'],
-  catalogs: ['Cadastros', 'Clientes, fornecedores, categorias e contas'],
-  reports: ['Relatorios', 'Fluxo previsto, saldos e auditoria'],
-  health: ['AdminMaster', 'Saude, logs e licenca do sistema'],
-  backup: ['Backup e ajustes', 'Seguranca local e configuracoes']
+  catalogs: ['Cadastros', 'Clientes e Fornecedores'],
+  catalog_parties: ['Cadastros', 'Clientes e Fornecedores'],
+  catalog_categories: ['Cadastros', 'Categorias'],
+  catalog_cost_centers: ['Cadastros', 'Centro de Custo'],
+  reports: ['Relatorios', 'Relatorio Mensal'],
+  health: ['Sistema', 'Licenca e Saude'],
+  backup: ['Sistema', 'Configuracoes']
 };
 
 const statusLabels = {
@@ -44,6 +47,13 @@ const statusLabels = {
 const typeLabels = {
   payable: 'Pagar',
   receivable: 'Receber'
+};
+
+const catalogViewKinds = {
+  catalogs: 'parties',
+  catalog_parties: 'parties',
+  catalog_categories: 'categories',
+  catalog_cost_centers: 'cost_centers'
 };
 
 const planLabels = {
@@ -240,7 +250,8 @@ async function refreshAll() {
 
   await loadEntries();
 
-  if (state.view === 'catalogs') {
+  if (catalogViewKinds[state.view]) {
+    state.catalogKind = catalogViewKinds[state.view];
     await loadCatalog();
   }
 
@@ -265,7 +276,7 @@ function updateLicenseUi() {
 
   if (!active) {
     byId('activation-message').textContent = state.license?.message || 'Ative para liberar o painel.';
-    byId('activation-api-url').value = state.settings?.license?.apiUrl || '';
+    byId('activation-api-url').value = state.settings?.license?.apiUrl || 'http://localhost:3877';
   }
 }
 
@@ -284,7 +295,8 @@ async function setView(view) {
     await loadEntries();
   }
 
-  if (view === 'catalogs') {
+  if (catalogViewKinds[view]) {
+    state.catalogKind = catalogViewKinds[view];
     await loadCatalog();
   }
 
@@ -307,8 +319,8 @@ function renderNav() {
     .map(
       (module) => `
         <button class="menu-item ${state.view === module.id ? 'active' : ''}" data-view="${module.id}" type="button">
+          <span class="menu-icon ${escapeHtml(module.icon || 'grid')}" aria-hidden="true"></span>
           <span>${escapeHtml(module.label)}</span>
-          <span>›</span>
         </button>
       `
     )
@@ -325,7 +337,10 @@ function render() {
     payable: () => renderEntriesView('payable'),
     receivable: () => renderEntriesView('receivable'),
     entries: () => renderEntriesView('all'),
-    catalogs: renderCatalogs,
+    catalogs: () => renderCatalogs('parties'),
+    catalog_parties: () => renderCatalogs('parties'),
+    catalog_categories: () => renderCatalogs('categories'),
+    catalog_cost_centers: () => renderCatalogs('cost_centers'),
     reports: renderReports,
     health: renderHealth,
     backup: renderBackup
@@ -344,21 +359,131 @@ function metricCard(label, value, detail, tone = '') {
   `;
 }
 
+function sumRows(rows, field) {
+  return (rows || []).reduce((total, row) => total + Number(row[field] || 0), 0);
+}
+
+function monthLabel() {
+  return new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(new Date());
+}
+
+function renderFinanceChart(rows) {
+  const fallbackRows = rows?.length
+    ? rows
+    : [
+        { due_date: '2026-04-01', receivable: 1200, payable: 800, balance: 400 },
+        { due_date: '2026-04-06', receivable: 1800, payable: 1000, balance: 800 },
+        { due_date: '2026-04-11', receivable: 1600, payable: 1250, balance: 350 },
+        { due_date: '2026-04-16', receivable: 2600, payable: 980, balance: 1620 },
+        { due_date: '2026-04-21', receivable: 3200, payable: 1500, balance: 1700 },
+        { due_date: '2026-04-26', receivable: 2800, payable: 1100, balance: 1700 },
+        { due_date: '2026-04-30', receivable: 3600, payable: 1400, balance: 2200 }
+      ];
+  const limited = fallbackRows.slice(0, 18);
+  const maxValue = Math.max(
+    1,
+    ...limited.map((row) => Math.max(Number(row.receivable || 0), Number(row.payable || 0), Math.abs(Number(row.balance || 0))))
+  );
+  const points = limited
+    .map((row, index) => {
+      const x = limited.length === 1 ? 50 : (index / (limited.length - 1)) * 100;
+      const y = 100 - Math.max(8, (Math.abs(Number(row.balance || 0)) / maxValue) * 82);
+      return `${x},${y}`;
+    })
+    .join(' ');
+
+  return `
+    <div class="finance-chart">
+      <div class="chart-bars-row">
+        ${limited
+          .map((row) => {
+            const amount = Math.max(Number(row.receivable || 0), Number(row.payable || 0));
+            const height = Math.max(12, Math.round((amount / maxValue) * 100));
+            const kind = Number(row.payable || 0) > Number(row.receivable || 0) ? 'payable' : 'receivable';
+            return `<span class="flow-bar ${kind}" style="height:${height}%"></span>`;
+          })
+          .join('')}
+      </div>
+      <svg class="chart-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        <polyline points="${points}"></polyline>
+      </svg>
+    </div>
+  `;
+}
+
+function renderMiniBars(values, className = '') {
+  const numbers = values.map((value) => Math.max(0, Number(value || 0)));
+  const max = Math.max(1, ...numbers);
+
+  return `
+    <div class="mini-bars ${className}">
+      ${numbers.map((value) => `<span style="height:${Math.max(18, Math.round((value / max) * 100))}%"></span>`).join('')}
+    </div>
+  `;
+}
+
 function renderDashboard() {
   const { totals, counts, nextEntries, cashFlow, planSummary } = state.snapshot;
   const root = byId('view-root');
   const totalOverdue = counts.overduePayables + counts.overdueReceivables;
   const totalDueToday = counts.dueTodayPayables + counts.dueTodayReceivables;
+  const receivableFlow = sumRows(cashFlow, 'receivable');
+  const payableFlow = sumRows(cashFlow, 'payable');
+  const overdueAmount = state.entries
+    .filter((entry) => entry.status === 'overdue')
+    .reduce((total, entry) => total + Number(entry.amount_open || 0), 0);
 
   root.innerHTML = `
     <section class="metrics">
-      ${metricCard('A pagar em aberto', formatCurrency(totals.totalPayableOpen), 'Despesas pendentes', 'clay')}
-      ${metricCard('A receber em aberto', formatCurrency(totals.totalReceivableOpen), 'Recebimentos pendentes', 'moss')}
-      ${metricCard('Saldo previsto', formatCurrency(totals.projectedBalance), 'Receber menos pagar', 'slate')}
-      ${metricCard('Vencidas / hoje', `${totalOverdue} / ${totalDueToday}`, 'Alertas criticos', '')}
+      ${metricCard('A Receber Hoje', formatCurrency(totals.totalReceivableOpen), `${counts.dueTodayReceivables} vencem hoje`, 'moss')}
+      ${metricCard('A Pagar Hoje', formatCurrency(totals.totalPayableOpen), `${counts.dueTodayPayables} vencem hoje`, 'clay')}
+      ${metricCard('Vencidos', formatCurrency(overdueAmount), `${totalOverdue} titulo(s) em atraso`, '')}
+      ${metricCard('Saldo do Caixa', formatCurrency(totals.projectedBalance), 'Previsto pelos lancamentos', 'slate')}
     </section>
 
     ${renderAlertCenter(counts)}
+
+    <section class="dashboard-grid">
+      <article class="panel">
+        <div class="panel-header">
+          <h3>Fluxo de Caixa</h3>
+          <span class="muted">Proximos 45 dias</span>
+        </div>
+        ${renderFinanceChart(cashFlow)}
+        <div class="chart-legend">
+          <span><i class="legend-dot"></i>Recebimentos</span>
+          <span><i class="legend-dot red"></i>Despesas</span>
+        </div>
+        <div class="dashboard-totals">
+          <span>Recebido: <strong class="money-in">${formatCurrency(totals.receivedThisMonth)}</strong></span>
+          <span>A vencer: <strong>${formatCurrency(receivableFlow)}</strong></span>
+          <span>A pagar: <strong class="money-out">${formatCurrency(payableFlow)}</strong></span>
+        </div>
+      </article>
+
+      <div class="side-stack">
+        <article class="panel">
+          <div class="panel-header">
+            <h3>Contas Vencidas</h3>
+            <span class="muted">${totalOverdue} alerta(s)</span>
+          </div>
+          <p class="money-out" style="font-size:1.55rem;margin:0 0 4px">${formatCurrency(overdueAmount)}</p>
+          <p class="muted" style="margin:0">Regularize ou reprograme os vencimentos.</p>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <h3>Resumo do Mes</h3>
+            <span class="muted">${escapeHtml(monthLabel())}</span>
+          </div>
+          <p class="muted" style="margin:0">Recebido</p>
+          <p class="money-in" style="font-size:1.4rem;margin:6px 0 10px">${formatCurrency(totals.receivedThisMonth)}</p>
+          ${renderMiniBars([totals.receivedThisMonth, receivableFlow, totals.totalReceivableOpen, totals.projectedBalance], 'received')}
+          <p class="muted" style="margin:14px 0 0">Vencidos</p>
+          <p class="money-out" style="font-size:1.2rem;margin:4px 0 0">${formatCurrency(overdueAmount)}</p>
+        </article>
+      </div>
+    </section>
 
     <section class="grid-two">
       <article class="panel">
@@ -371,8 +496,8 @@ function renderDashboard() {
 
       <article class="panel">
         <div class="panel-header">
-          <h3>Fluxo dos proximos 45 dias</h3>
-          <span class="muted">Previsto por vencimento</span>
+          <h3>Fluxo previsto</h3>
+          <span class="muted">Detalhado por data</span>
         </div>
         ${renderCashFlow(cashFlow)}
       </article>
@@ -380,7 +505,7 @@ function renderDashboard() {
 
     <section class="panel premium-strip">
       <div>
-        <p class="eyebrow">Inteligencia financeira</p>
+        <p class="eyebrow">FinancePro</p>
         <h3>Separacao por contas unicas, fixas e parceladas</h3>
       </div>
       <div class="plan-chips">
@@ -623,22 +748,28 @@ function planLabelWithInstallment(entry) {
   return planLabels[plan] || planLabels.single;
 }
 
-function renderCatalogs() {
+function renderCatalogs(kind = state.catalogKind) {
+  state.catalogKind = kind;
   const root = byId('view-root');
+  const showTabs = state.view === 'catalogs';
 
   root.innerHTML = `
     <section class="table-card">
-      <div class="tabs">
-        ${Object.entries(catalogConfigs)
-          .map(
-            ([kind, config]) => `
-              <button class="tab ${state.catalogKind === kind ? 'active' : ''}" data-action="catalog-tab" data-kind="${kind}" type="button">
-                ${escapeHtml(config.label)}
-              </button>
-            `
-          )
-          .join('')}
-      </div>
+      ${
+        showTabs
+          ? `<div class="tabs">
+              ${Object.entries(catalogConfigs)
+                .map(
+                  ([catalogKind, config]) => `
+                    <button class="tab ${state.catalogKind === catalogKind ? 'active' : ''}" data-action="catalog-tab" data-kind="${catalogKind}" type="button">
+                      ${escapeHtml(config.label)}
+                    </button>
+                  `
+                )
+                .join('')}
+            </div>`
+          : ''
+      }
 
       <div class="list-header">
         <div>
@@ -1388,8 +1519,27 @@ function bindGlobalEvents() {
     }
   });
 
-  byId('quick-payable').addEventListener('click', () => openEntryDialog('payable'));
-  byId('quick-receivable').addEventListener('click', () => openEntryDialog('receivable'));
+  document.querySelectorAll('[data-window-action]').forEach((button) => {
+    button.addEventListener('click', () => {
+      if (button.dataset.windowAction === 'minimize') {
+        api.minimizeWindow();
+      }
+
+      if (button.dataset.windowAction === 'close') {
+        api.closeWindow();
+      }
+    });
+  });
+
+  byId('global-search').addEventListener('input', async (event) => {
+    state.filters.query = event.target.value;
+
+    if (['payable', 'receivable', 'entries'].includes(state.view)) {
+      await loadEntries();
+      render();
+    }
+  });
+
   byId('scan-button').addEventListener('click', scanNotifications);
   byId('refresh-button').addEventListener('click', () => runSafely(refreshAll, 'Dados atualizados.'));
   byId('activate-button').addEventListener('click', activateProduct);

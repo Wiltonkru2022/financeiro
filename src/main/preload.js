@@ -26,6 +26,8 @@ contextBridge.exposeInMainWorld('contaCertaApi', {
   createBackup: () => ipcRenderer.invoke('system:create-backup'),
   exportCsv: (filters) => ipcRenderer.invoke('system:export-csv', filters),
   restoreBackup: () => ipcRenderer.invoke('system:restore-backup'),
+  minimizeWindow: () => ipcRenderer.invoke('window:minimize'),
+  closeWindow: () => ipcRenderer.invoke('window:close'),
   onMenuCreateBackup: (callback) => ipcRenderer.on('menu:create-backup', callback),
   onMenuExportCsv: (callback) => ipcRenderer.on('menu:export-csv', callback)
 });
